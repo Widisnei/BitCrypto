@@ -83,15 +83,15 @@ target_compile_definitions(bitcrypto_common INTERFACE
   NOMINMAX _CRT_SECURE_NO_WARNINGS
   BITCRYPTO_VERSION="${BITCRYPTO_VERSION_STRING}")
 target_include_directories(bitcrypto_common INTERFACE
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Core/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Hash/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Encoding/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.KDF/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.HD/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Tx/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.PSBT/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.PSBTv2/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Math/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Core/include/bitcrypto
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Hash/include/bitcrypto
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Encoding/include/bitcrypto
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.KDF/include/bitcrypto
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.HD/include/bitcrypto
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Tx/include/bitcrypto
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.PSBT/include/bitcrypto
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.PSBTv2/include/bitcrypto
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Math/include/bitcrypto
 )
 
 # -----------------------------------------------------------------------------

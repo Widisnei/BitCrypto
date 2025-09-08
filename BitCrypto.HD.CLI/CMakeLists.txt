@@ -7,4 +7,6 @@ target_include_directories(BitCrypto.HD.CLI PRIVATE
     ${CMAKE_SOURCE_DIR}/BitCrypto.HD/include
 )
 target_link_libraries(BitCrypto.HD.CLI PRIVATE BitCrypto.Core BitCrypto.Hash BitCrypto.Encoding BitCrypto.KDF BitCrypto.HD)
-if (MSVC) target_compile_definitions(BitCrypto.HD.CLI PRIVATE _CRT_SECURE_NO_WARNINGS) endif()
+if (MSVC)
+    target_compile_definitions(BitCrypto.HD.CLI PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()

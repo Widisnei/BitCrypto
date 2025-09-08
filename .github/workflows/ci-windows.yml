@@ -1,0 +1,48 @@
+name: CI Windows
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  PRESET: windows-relwithdebinfo
+  BUILD_PRESET: build-relwithdebinfo
+  TEST_PRESET: ctest-relwithdebinfo
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Ninja
+        uses: ashutoshvarma/setup-ninja@v1.1
+
+      - name: Configure (CPU)
+        run: cmake --preset ${env:PRESET}
+
+      - name: Build
+        run: cmake --build --preset ${env:BUILD_PRESET} --parallel
+
+      - name: Test
+        run: ctest --preset ${env:TEST_PRESET} --output-on-failure
+
+      - name: Package (ZIP + manifest)
+        shell: pwsh
+        run: |
+          python -V
+          python tools/guardrails/package_release.py v${{ github.run_number }}
+          echo "Artifacts prontos."
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitcrypto-windows-artifacts
+          path: |
+            build\win-relwithdebinfo\**\*.exe
+            MANIFEST_v*.txt
+            BitCrypto-*.zip

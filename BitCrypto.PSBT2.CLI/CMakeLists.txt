@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.20)
+project(BitCrypto.PSBT2.CLI LANGUAGES CXX)
+add_executable(BitCrypto.PSBT2.CLI src/main.cpp)
+target_include_directories(BitCrypto.PSBT2.CLI PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(BitCrypto.PSBT2.CLI PRIVATE BitCrypto.Tx BitCrypto.Hash BitCrypto.Encoding BitCrypto.PSBTv2 BitCrypto.Core)
+if (MSVC) target_compile_definitions(BitCrypto.PSBT2.CLI PRIVATE _CRT_SECURE_NO_WARNINGS) endif()

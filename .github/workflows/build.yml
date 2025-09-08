@@ -1,0 +1,8 @@
+name: Build (wrapper)
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+jobs:
+  call-ci:
+    uses: ./.github/workflows/ci-windows.yml

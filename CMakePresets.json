@@ -1,0 +1,52 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 23, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "windows-relwithdebinfo",
+      "displayName": "Windows RelWithDebInfo (MSVC, CPU)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/win-relwithdebinfo",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "BITCRYPTO_ENABLE_CUDA": "OFF",
+        "BITCRYPTO_ENABLE_LTO":  "ON",
+        "BITCRYPTO_STRICT_WARNINGS": "OFF"
+      }
+    },
+    {
+      "name": "windows-release",
+      "displayName": "Windows Release (MSVC, CPU)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/win-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BITCRYPTO_ENABLE_CUDA": "OFF",
+        "BITCRYPTO_ENABLE_LTO":  "ON",
+        "BITCRYPTO_STRICT_WARNINGS": "ON"
+      }
+    },
+    {
+      "name": "windows-cuda",
+      "displayName": "Windows Release (MSVC, CUDA local)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/win-cuda",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BITCRYPTO_ENABLE_CUDA": "ON",
+        "BITCRYPTO_CUDA_ARCH_LIST": "86",
+        "BITCRYPTO_ENABLE_LTO":  "ON",
+        "BITCRYPTO_STRICT_WARNINGS": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "build-relwithdebinfo", "configurePreset": "windows-relwithdebinfo" },
+    { "name": "build-release",        "configurePreset": "windows-release"       },
+    { "name": "build-cuda",           "configurePreset": "windows-cuda"          }
+  ],
+  "testPresets": [
+    { "name": "ctest-relwithdebinfo", "configurePreset": "windows-relwithdebinfo" },
+    { "name": "ctest-release",        "configurePreset": "windows-release"        }
+  ]
+}

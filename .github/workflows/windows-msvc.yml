@@ -1,0 +1,13 @@
+name: Windows MSVC Build (delegates to CI Windows)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  redirect:
+    runs-on: windows-latest
+    steps:
+      - name: Trigger note
+        run: echo "Este workflow redireciona para 'ci-windows.yml' (pipeline principal)."

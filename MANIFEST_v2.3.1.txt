@@ -1,0 +1,7 @@
+SHA256                           SIZE(bytes)  PATH
+832d26f0f5e2c9702638fb84fa11e012322458c381aae869175d6b98cd0dcdbd        7564  BitCrypto/BitCrypto.Math/include/bitcrypto/math/fe256.h
+de41aae6a5c12cc5730a0170ba010e843549d882338fb94ac9aaec08f0ca2e00        3975  BitCrypto/BitCrypto.EC/include/bitcrypto/ec/secp256k1.h
+f124bd03d64837165b637a56eaa7663a16c1855abee87c4ca37815d1bb95a381        4214  BitCrypto/BitCrypto.SchnorrCLI/src/main.cpp
+887f0e407653623bc56275cb09f9599c7afc8fa75b2d13ee1e1e370bae31151f          71  BitCrypto/tools/guardrails/check_constant_time_heuristic.py
+d3e7b8c135624c72a0cd1a2d6aa080521fd8a565dba9d71bfc4df1108da23101         384  BitCrypto/docs/RELEASE_NOTES_2.3.1_OPT.md
+bd6af100a4306a198a4f352f270c5583406b7721551f7534d0d88bda343cdd81         699  BitCrypto/MANIFEST_v2.3.1_OPT.txt

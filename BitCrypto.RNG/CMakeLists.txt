@@ -1,0 +1,3 @@
+add_library(BitCrypto.RNG STATIC src/unity.cpp)
+target_include_directories(BitCrypto.RNG PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if (MSVC) target_compile_definitions(BitCrypto.RNG PRIVATE _CRT_SECURE_NO_WARNINGS) endif()

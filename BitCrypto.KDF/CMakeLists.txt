@@ -1,4 +1,6 @@
 add_library(BitCrypto.KDF STATIC src/unity.cpp)
 target_include_directories(BitCrypto.KDF PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/BitCrypto.Hash/include)
 target_link_libraries(BitCrypto.KDF PUBLIC BitCrypto.Hash)
-if (MSVC) target_compile_definitions(BitCrypto.KDF PRIVATE _CRT_SECURE_NO_WARNINGS) endif()
+if (MSVC)
+target_compile_definitions(BitCrypto.KDF PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()

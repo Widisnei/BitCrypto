@@ -113,35 +113,92 @@ endif()
 # -----------------------------------------------------------------------------
 # Always include these core modules.  CUDA-specific modules are added only if
 # BITCRYPTO_ENABLE_CUDA is ON.  The ordering reflects module dependencies.
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.Core/CMakeLists.txt")
+  add_subdirectory(BitCrypto.Core)
+endif()
 
-add_subdirectory(BitCrypto.Core)
-add_subdirectory(BitCrypto.Hash)
-add_subdirectory(BitCrypto.Encoding)
-add_subdirectory(BitCrypto.KDF)
-add_subdirectory(BitCrypto.HD)
-add_subdirectory(BitCrypto.Tx)
-add_subdirectory(BitCrypto.PSBT)
-add_subdirectory(BitCrypto.PSBTv2)
-add_subdirectory(BitCrypto.Math)
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.Hash/CMakeLists.txt")
+  add_subdirectory(BitCrypto.Hash)
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.Encoding/CMakeLists.txt")
+  add_subdirectory(BitCrypto.Encoding)
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.KDF/CMakeLists.txt")
+  add_subdirectory(BitCrypto.KDF)
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.HD/CMakeLists.txt")
+  add_subdirectory(BitCrypto.HD)
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.Tx/CMakeLists.txt")
+  add_subdirectory(BitCrypto.Tx)
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.PSBT/CMakeLists.txt")
+  add_subdirectory(BitCrypto.PSBT)
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.PSBTv2/CMakeLists.txt")
+  add_subdirectory(BitCrypto.PSBTv2)
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.Math/CMakeLists.txt")
+  add_subdirectory(BitCrypto.Math)
+endif()
 
 # Signatures, RNG and extra utilities
-add_subdirectory(BitCrypto.Sign)
-add_subdirectory(BitCrypto.RNG)
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.Sign/CMakeLists.txt")
+  add_subdirectory(BitCrypto.Sign)
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.RNG/CMakeLists.txt")
+  add_subdirectory(BitCrypto.RNG)
+endif()
 
 # Command-line interfaces
-add_subdirectory(BitCrypto.CLI)
-add_subdirectory(BitCrypto.HD.CLI)
-add_subdirectory(BitCrypto.PSBTCLI)
-add_subdirectory(BitCrypto.PSBT2.CLI)
-add_subdirectory(BitCrypto.WSCLI)
-add_subdirectory(BitCrypto.MSCLI)
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.CLI/CMakeLists.txt")
+  add_subdirectory(BitCrypto.CLI)
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.HD.CLI/CMakeLists.txt")
+  add_subdirectory(BitCrypto.HD.CLI)
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.PSBTCLI/CMakeLists.txt")
+  add_subdirectory(BitCrypto.PSBTCLI)
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.PSBT2.CLI/CMakeLists.txt")
+  add_subdirectory(BitCrypto.PSBT2.CLI)
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.WSCLI/CMakeLists.txt")
+  add_subdirectory(BitCrypto.WSCLI)
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.MSCLI/CMakeLists.txt")
+  add_subdirectory(BitCrypto.MSCLI)
+endif()
 
 # Benchmarks and tests
-add_subdirectory(BitCrypto.Bench)
-add_subdirectory(BitCrypto.BenchCLI)
+if(EXISTS "${CMAKE_SOURCE_DIR}/BBitCrypto.Bench/CMakeLists.txt")
+  add_subdirectory(BitCrypto.Bench)
+endif()
 
-add_subdirectory(BitCrypto.Tests)
-add_subdirectory(BitCrypto.PSBT2.Tests)
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.BenchCLI/CMakeLists.txt")
+  add_subdirectory(BitCrypto.BenchCLI)
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.Tests/CMakeLists.txt")
+  add_subdirectory(BitCrypto.Tests)
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/BitCrypto.PSBT2.Tests/CMakeLists.txt")
+  add_subdirectory(BitCrypto.PSBT2.Tests)
+endif()
 
 # GPU acceleration (optional)
 if(BITCRYPTO_ENABLE_CUDA)

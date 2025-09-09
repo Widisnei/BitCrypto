@@ -8,6 +8,7 @@ target_include_directories(BitCrypto.PSBT PUBLIC
     ${CMAKE_SOURCE_DIR}/BitCrypto.Tx/include
 )
 target_link_libraries(BitCrypto.PSBT PUBLIC BitCrypto.Hash BitCrypto.Core BitCrypto.Sign BitCrypto.Encoding BitCrypto.Tx)
+target_link_libraries(BitCrypto.PSBT PRIVATE bitcrypto_common)
 if (MSVC)
     target_compile_definitions(BitCrypto.PSBT PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif()

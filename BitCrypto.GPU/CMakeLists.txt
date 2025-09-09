@@ -9,3 +9,4 @@ target_include_directories(BitCrypto.GPU PUBLIC
 )
 set_target_properties(BitCrypto.GPU PROPERTIES CUDA_ARCHITECTURES 86)
 target_link_libraries(BitCrypto.GPU PUBLIC BitCrypto.Core)
+target_link_libraries(BitCrypto.GPU PRIVATE bitcrypto_common)

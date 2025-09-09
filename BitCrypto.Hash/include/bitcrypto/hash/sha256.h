@@ -59,29 +59,6 @@ struct SHA256 {
         #undef S1
         #undef s0
         #undef s1
-    };
-        uint32_t w[64];
-        for (int i=0;i<16;i++){
-            w[i] = ((uint32_t)block[4*i] << 24) | ((uint32_t)block[4*i+1] << 16) |
-                   ((uint32_t)block[4*i+2] << 8) | (uint32_t)block[4*i+3];
-        }
-        for (int i=16;i<64;i++){
-            uint32_t s0 = rotr(w[i-15],7) ^ rotr(w[i-15],18) ^ (w[i-15]>>3);
-            uint32_t s1 = rotr(w[i-2],17) ^ rotr(w[i-2],19) ^ (w[i-2]>>10);
-            w[i] = w[i-16] + s0 + w[i-7] + s1;
-        }
-        uint32_t a=h[0],b=h[1],c=h[2],d=h[3],e=h[4],f=h[5],g=h[6],hh=h[7];
-        for (int i=0;i<64;i++){
-            uint32_t S1 = rotr(e,6) ^ rotr(e,11) ^ rotr(e,25);
-            uint32_t ch = (e & f) ^ ((~e) & g);
-            uint32_t temp1 = hh + S1 + ch + K[i] + w[i];
-            uint32_t S0 = rotr(a,2) ^ rotr(a,13) ^ rotr(a,22);
-            uint32_t maj = (a & b) ^ (a & c) ^ (b & c);
-            uint32_t temp2 = S0 + maj;
-            hh = g; g = f; f = e; e = d + temp1;
-            d = c; c = b; b = a; a = temp1 + temp2;
-        }
-        h[0]+=a; h[1]+=b; h[2]+=c; h[3]+=d; h[4]+=e; h[5]+=f; h[6]+=g; h[7]+=hh;
     }
 
     void update(const uint8_t* data, size_t len){

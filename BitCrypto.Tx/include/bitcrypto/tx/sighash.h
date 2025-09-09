@@ -9,10 +9,6 @@ namespace bitcrypto { namespace tx {
 
 enum : uint32_t { SIGHASH_ALL = 0x01 };
 
-inline void hash256(const std::vector<uint8_t>& data, uint8_t out32[32]){
-    using namespace bitcrypto::hash; uint8_t h1[32]; sha256(data.data(), data.size(), h1); sha256(h1, 32, out32);
-}
-
 // scriptCode para P2WPKH (BIP-143) a partir de hash160(pubkey)
 inline std::vector<uint8_t> scriptCode_p2wpkh(const uint8_t h160[20]){
     std::vector<uint8_t> sc; sc.reserve(1+1+20+2);

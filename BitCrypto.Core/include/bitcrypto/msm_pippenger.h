@@ -41,11 +41,12 @@ static inline int wnaf_recode(const U256& k, int w, std::vector<int8_t>& out){
         }
         out.push_back(zi);
         // shift right 1
-        uint64_t c3 = d.v[3]&1ULL; (void)c3;
-        d.v[3] >>= 1;
-        uint64_t c2 = d.v[2]&1ULL; d.v[3] |= c2<<63; d.v[2] >>= 1;
-        uint64_t c1 = d.v[1]&1ULL; d.v[2] |= c1<<63; d.v[1] >>= 1;
-        d.v[1] |= (d.v[0]&1ULL)<<63; d.v[0] >>= 1;
+        uint64_t carry = 0;
+        for (int i=3;i>=0;i--){
+            uint64_t new_c = d.v[i] & 1ULL;
+            d.v[i] = (d.v[i]>>1) | (carry<<63);
+            carry = new_c;
+        }
     }
     return (int)out.size();
 }
@@ -57,14 +58,13 @@ static inline bool msm_pippenger(const std::vector<ECPointA>& points,
                                  PippengerContext* ctx=nullptr){
     size_t n = points.size();
     if (n==0 || scalars.size()!=n){ out = ECPointA{Fp::zero(),Fp::zero(),true}; return false; }
-    // Implementação simplificada: soma cada escalar·ponto usando multiplicação wNAF pública
     ECPointJ R{Fp::zero(),Fp::zero(),Fp::zero()};
     for (size_t i=0;i<n;i++){
         ECPointJ t = Secp256k1::scalar_mul_wnaf_public(scalars[i], points[i]);
         R = Secp256k1::add(R, t);
     }
     out = Secp256k1::to_affine(R);
-    (void)ctx; // futuro: utilizar contexto de precompute
+    (void)ctx; // futuro: usar precompute
     return true;
 }
 

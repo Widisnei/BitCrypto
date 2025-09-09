@@ -3,9 +3,9 @@
 #include <vector>
 #include <cstring>
 #include "tx.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/sha256.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/tagged.h"
-#include "../../BitCrypto.Encoding/include/bitcrypto/encoding/varint.h"
+#include <bitcrypto/hash/sha256.h>
+#include <bitcrypto/hash/tagged.h>
+#include <bitcrypto/encoding/varint.h>
 
 namespace bitcrypto { namespace tx {
 

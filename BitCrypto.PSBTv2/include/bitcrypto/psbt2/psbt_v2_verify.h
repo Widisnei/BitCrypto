@@ -4,8 +4,8 @@
 #include <cstdint>
 #include <cstring>
 #include "psbt_v2.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/hash160.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/sha256.h"
+#include <bitcrypto/hash/hash160.h>
+#include <bitcrypto/hash/sha256.h>
 
 namespace bitcrypto { namespace psbt2 {
 

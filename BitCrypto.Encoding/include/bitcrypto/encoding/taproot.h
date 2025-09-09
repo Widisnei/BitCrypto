@@ -4,8 +4,8 @@
 #include <cstdint>
 #include "bech32.h"
 #include "segwit.h"
-#include "../hash/tagged_hash.h"
-#include "../../BitCrypto.Core/include/bitcrypto/ec_secp256k1.h"
+#include <bitcrypto/hash/tagged_hash.h>
+#include <bitcrypto/ec_secp256k1.h>
 namespace bitcrypto { namespace encoding {
 inline bitcrypto::ECPointA normalize_even_y(const bitcrypto::ECPointA& A, uint8_t out32[32], bool& negated){
     using namespace bitcrypto; U256 y=A.y.to_u256_nm(); bool odd=(y.v[0]&1ULL)!=0ULL; ECPointA P=A; if(odd){ P.y = Fp::sub(Fp::zero(), P.y); negated=true; } else { negated=false; }

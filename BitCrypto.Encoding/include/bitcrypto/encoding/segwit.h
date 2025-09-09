@@ -3,8 +3,8 @@
 #include <vector>
 #include <cstdint>
 #include "bech32.h"
-#include "../hash/hash160.h"
-#include "../../BitCrypto.Core/include/bitcrypto/ec_secp256k1.h"
+#include <bitcrypto/hash/hash160.h>
+#include <bitcrypto/ec_secp256k1.h>
 namespace bitcrypto { namespace encoding {
 inline std::string segwit_hrp(bool testnet){ return testnet ? std::string("tb") : std::string("bc"); }
 inline std::string p2wpkh_from_priv(const uint8_t priv32_be[32], bool compressed, bool testnet){

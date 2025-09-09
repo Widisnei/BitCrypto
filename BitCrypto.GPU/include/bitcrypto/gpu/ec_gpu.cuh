@@ -1,5 +1,5 @@
 #pragma once
-#include "../../BitCrypto.Core/include/bitcrypto/ec_secp256k1.h"
+#include <bitcrypto/ec_secp256k1.h>
 namespace bitcrypto { namespace gpu {
 __global__ void scalar_mul_kernel(const uint8_t* __restrict__ priv32_be,
                                   uint8_t* __restrict__ pub_out,

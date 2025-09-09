@@ -4,8 +4,8 @@
 #include <cstring>
 #include "bip341.h"
 #include "taproot.h"
-#include "../../BitCrypto.Sign/include/bitcrypto/sign/schnorr.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/sha256.h"
+#include <bitcrypto/sign/schnorr.h>
+#include <bitcrypto/hash/sha256.h>
 
 namespace bitcrypto { namespace tx {
 

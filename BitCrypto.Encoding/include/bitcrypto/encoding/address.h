@@ -4,7 +4,7 @@
 #include <cstdint>
 #include "b58check.h"
 #include "bech32.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/hash160.h"
+#include <bitcrypto/hash/hash160.h>
 
 namespace bitcrypto { namespace encoding {
 

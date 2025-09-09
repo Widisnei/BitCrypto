@@ -5,3 +5,4 @@ target_include_directories(BitCrypto.Encoding PUBLIC
     ${CMAKE_SOURCE_DIR}/BitCrypto.Core/include
 )
 target_link_libraries(BitCrypto.Encoding PUBLIC BitCrypto.Hash BitCrypto.Core)
+target_link_libraries(BitCrypto.Encoding PRIVATE bitcrypto_common)

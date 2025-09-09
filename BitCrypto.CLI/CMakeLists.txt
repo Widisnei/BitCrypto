@@ -6,6 +6,7 @@ target_include_directories(BitCrypto.CLI PRIVATE
     ${CMAKE_SOURCE_DIR}/BitCrypto.Encoding/include
 )
 target_link_libraries(BitCrypto.CLI PRIVATE BitCrypto.Core BitCrypto.Hash BitCrypto.Encoding BitCrypto.Sign BitCrypto.RNG BitCrypto.KDF BitCrypto.HD)
+target_link_libraries(BitCrypto.CLI PRIVATE bitcrypto_common)
 if (TARGET BitCrypto.GPU)
   target_compile_definitions(BitCrypto.CLI PRIVATE BITCRYPTO_WITH_CUDA=1)
   target_link_libraries(BitCrypto.CLI PRIVATE BitCrypto.GPU)

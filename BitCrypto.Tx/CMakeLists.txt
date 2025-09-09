@@ -6,6 +6,7 @@ target_include_directories(BitCrypto.Tx PUBLIC
     ${CMAKE_SOURCE_DIR}/BitCrypto.Encoding/include
 )
 target_link_libraries(BitCrypto.Tx PUBLIC BitCrypto.Hash BitCrypto.Core BitCrypto.Encoding)
+target_link_libraries(BitCrypto.Tx PRIVATE bitcrypto_common)
 if (MSVC)
     target_compile_definitions(BitCrypto.Tx PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif()

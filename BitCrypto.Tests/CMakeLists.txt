@@ -9,3 +9,5 @@ target_link_libraries(BitCrypto.Tests PRIVATE bitcrypto_common)
 if (MSVC)
     target_compile_definitions(BitCrypto.Tests PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif()
+
+add_test(NAME BitCrypto.Tests COMMAND BitCrypto.Tests)

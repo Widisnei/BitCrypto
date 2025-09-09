@@ -2,7 +2,7 @@
 #include <vector>
 #include <cstdint>
 #include <string>
-#include "taproot.h"
+#include <bitcrypto/hash/tagged_hash.h>
 
 namespace bitcrypto { namespace tx {
 
@@ -19,7 +19,7 @@ static inline void tapleaf_hash(const std::vector<uint8_t>& script, uint8_t leaf
     data.push_back(leaf_ver);
     ser_compact_size(data, (uint64_t)script.size());
     data.insert(data.end(), script.begin(), script.end());
-    bitcrypto::tx::tagged_hash("TapLeaf", data, out32);
+    bitcrypto::hash::sha256_tagged("TapLeaf", data.data(), data.size(), out32);
 }
 
 }} // ns

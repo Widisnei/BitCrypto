@@ -4,7 +4,7 @@
 #include <vector>
 #include <cstring>
 #include <bitcrypto/ec_secp256k1.h>
-#include <bitcrypto/mod_n.h>
+#include <bitcrypto/field_n.h>
 #include <bitcrypto/hash/sha256.h>
 #include <bitcrypto/hash/hmac.h>
 #include <bitcrypto/hash/tagged_hash.h>

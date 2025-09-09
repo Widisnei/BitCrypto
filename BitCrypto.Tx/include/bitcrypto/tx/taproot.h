@@ -30,9 +30,9 @@ inline void tagged_hash(const char* tag, const std::vector<uint8_t>& msg, uint8_
 
 // Extrai X (32B) e paridade de Y de um ponto afim.
 inline void xonly_from_point(const bitcrypto::ECPointA& P, uint8_t x32[32], bool& y_odd){
-    bitcrypto::U256 xu = P.X.to_u256_nm();
+    bitcrypto::U256 xu = P.x.to_u256_nm();
     xu.to_be32(x32);
-    bitcrypto::U256 yu = P.Y.to_u256_nm();
+    bitcrypto::U256 yu = P.y.to_u256_nm();
     y_odd = (yu.v[0] & 1ULL) != 0ULL;
 }
 
@@ -47,7 +47,7 @@ inline bool lift_x_even(const uint8_t x32[32], bitcrypto::ECPointA& P){
     // expoente = (p+1)/4
     U256 e_sqrt{{0xFFFFFFFFBFFFFF0CULL,0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL,0x3FFFFFFFFFFFFFFFULL}};
     Fp Y = Fp::pow(y2, e_sqrt);
-    if (Fp::is_zero(Y) && !Fp::is_zero(y2)) return false;
+    if (Secp256k1::is_zero_fp(Y) && !Secp256k1::is_zero_fp(y2)) return false;
     // força Y par
     U256 yu = Y.to_u256_nm(); if ((yu.v[0] & 1ULL) != 0ULL) Y = Fp::sub(Fp::zero(), Y);
     P = ECPointA{X, Y, false};
@@ -61,9 +61,11 @@ inline bool taproot_tweak_seckey(const uint8_t seckey32[32], const uint8_t* merk
     U256 d = U256::from_be32(seckey32); Secp256k1::scalar_mod_n(d); if (d.is_zero()) return false;
     auto P = Secp256k1::derive_pubkey(d);
     // garante Y par ajustando d se necessário
-    U256 yu = P.Y.to_u256_nm(); if (yu.v[0] & 1ULL){
-        const U256 N{{bitcrypto::Fn::N[0],bitcrypto::Fn::N[1],bitcrypto::Fn::N[2],bitcrypto::Fn::N[3]}};
-        d = U256::sub(N, d); P = Secp256k1::neg(P);
+    U256 yu = P.y.to_u256_nm(); if (yu.v[0] & 1ULL){
+        Fn fd = Fn::from_u256_nm(d);
+        Fn nd = Fn::sub(Fn::zero(), fd);
+        d = nd.to_u256_nm();
+        P.y = Fp::sub(Fp::zero(), P.y);
     }
     // xonly(P)
     uint8_t px[32]; bool _odd=false; xonly_from_point(P, px, _odd);
@@ -80,9 +82,10 @@ inline bool taproot_tweak_seckey(const uint8_t seckey32[32], const uint8_t* merk
     auto Q = Secp256k1::add(Secp256k1::to_jacobian(P), Secp256k1::scalar_mul(t, Secp256k1::G()));
     auto Qa = Secp256k1::to_affine(Q);
     // força Y(Q) par ajustando sk'
-    U256 yuQ = Qa.Y.to_u256_nm(); if (yuQ.v[0] & 1ULL){
-        const U256 N{{bitcrypto::Fn::N[0],bitcrypto::Fn::N[1],bitcrypto::Fn::N[2],bitcrypto::Fn::N[3]}};
-        skp = U256::sub(N, skp);
+    U256 yuQ = Qa.y.to_u256_nm(); if (yuQ.v[0] & 1ULL){
+        Fn fsk = Fn::from_u256_nm(skp);
+        Fn nd = Fn::sub(Fn::zero(), fsk);
+        skp = nd.to_u256_nm();
     }
     skp.to_be32(out32);
     return true;

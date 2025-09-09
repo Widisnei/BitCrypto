@@ -125,4 +125,3 @@ inline void sha256(const uint8_t* d, size_t n, uint8_t out[32]){
 }
 
 }} // namespace hash
-} // namespace bitcrypto

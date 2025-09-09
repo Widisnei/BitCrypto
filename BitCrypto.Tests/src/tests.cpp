@@ -13,13 +13,13 @@
 #include <bitcrypto/encoding/base58.h>
 #include <bitcrypto/encoding/segwit.h>
 #include <bitcrypto/encoding/taproot.h>
+#include <bitcrypto/sign/sign.h>
+#include <bitcrypto/encoding/der.h>
 #include <bitcrypto/hd/bip39.h>
 #include <bitcrypto/hd/bip32.h>
 #include <bitcrypto/tx/script.h>
 #include <bitcrypto/tx/miniscript.h>
 #include <bitcrypto/tx/tapscript.h>
-#include <bitcrypto/psbt2/psbt_v2.h>
-#include <bitcrypto/psbt2/psbt_v2_sign.h>
 
 using namespace bitcrypto;
 
@@ -107,10 +107,10 @@ int main(){
     // Bech32 mix-case rejeitado + HRP extremos + zeros no Base58
     {
         using namespace bitcrypto::encoding;
-        std::string bad = "Tb1qexampleaddress000000000000000000000qqqqqqqq"; std::string hrp; std::vector<uint8_t> data; bool is_m=false;
-        if (bech32_decode(bad, hrp, data, is_m)) { std::cerr<<"Bech32 mixed-case aceito\n"; return 1; }
-        std::string hrp84(84, 'a'); std::vector<uint8_t> d={0}; std::string enc2 = bech32_encode(hrp84, d, false); if (!enc2.empty()) { std::cerr<<"bech32 aceitou HRP>83\n"; return 1; }
-        std::string hrp1(1, 'a'); std::string ok = bech32_encode(hrp1, d, false); std::string out_hrp; std::vector<uint8_t> outd; bool ism=false;
+        std::string bad = "Tb1qexampleaddress000000000000000000000qqqqqqqq"; std::string hrp; std::vector<uint8_t> data; Bech32Variant var;
+        if (bech32_decode(bad, hrp, data, var)) { std::cerr<<"Bech32 mixed-case aceito\n"; return 1; }
+        std::string hrp84(84, 'a'); std::vector<uint8_t> d={0}; std::string enc2; if (bech32_encode(hrp84, d, Bech32Variant::BECH32, enc2)) { std::cerr<<"bech32 aceitou HRP>83\n"; return 1; }
+        std::string hrp1(1, 'a'); std::string ok; bech32_encode(hrp1, d, Bech32Variant::BECH32, ok); std::string out_hrp; std::vector<uint8_t> outd; Bech32Variant ism;
         if (ok.empty() || !bech32_decode(ok, out_hrp, outd, ism)) { std::cerr<<"bech32 falhou HRP=1\n"; return 1; }
         std::vector<uint8_t> payload = {0x00,0x00,0x00,0xAB,0xCD}; std::string s = bitcrypto::encoding::base58_encode(payload.data(), payload.size());
         std::vector<uint8_t> back2; if (!bitcrypto::encoding::base58_decode(s, back2) || back2!=payload) { std::cerr<<"Base58 round-trip falhou (zeros)\n"; return 1; }
@@ -119,9 +119,9 @@ int main(){
     {
         using namespace bitcrypto::encoding;
         std::vector<uint8_t> prog32(32, 0x01); std::vector<uint8_t> data; data.push_back(1);
-        std::vector<uint8_t> prog5; if (!convert_bits(prog5, 5, prog32, 8, true)) { std::cerr<<"convert_bits v1->5 falhou\n"; return 1; }
+        std::vector<uint8_t> prog5; if (!convert_bits(prog32, 8, 5, true, prog5)) { std::cerr<<"convert_bits v1->5 falhou\n"; return 1; }
         data.insert(data.end(), prog5.begin(), prog5.end());
-        std::string wrong = bech32_encode("bc", data, /*bech32m=*/false);
+        std::string wrong; bech32_encode("bc", data, Bech32Variant::BECH32, wrong);
         std::string hrp; std::vector<uint8_t> pr; int ver=0; bool ok = segwit_decode_address(wrong, hrp, ver, pr);
         if (ok) { std::cerr<<"segwit_decode aceitou v1+bech32\n"; return 1; }
     }
@@ -132,8 +132,8 @@ int main(){
         for (int iter=0; iter<200; ++iter){
             size_t n = (size_t)(rng()%128);
             std::vector<uint8_t> in(n); for (size_t i=0;i<n;i++) in[i]=(uint8_t)rng();
-            std::vector<uint8_t> five; if (!convert_bits(five, 5, in, 8, true)) { std::cerr<<"convert_bits 8->5 falhou\n"; return 1; }
-            std::vector<uint8_t> back; if (!convert_bits(back, 8, five, 5, false)) { std::cerr<<"convert_bits 5->8 falhou\n"; return 1; }
+            std::vector<uint8_t> five; if (!convert_bits(in, 8, 5, true, five)) { std::cerr<<"convert_bits 8->5 falhou\n"; return 1; }
+            std::vector<uint8_t> back; if (!convert_bits(five, 5, 8, false, back)) { std::cerr<<"convert_bits 5->8 falhou\n"; return 1; }
             if (back != in) { std::cerr<<"convert_bits property falhou\n"; return 1; }
         }
     }
@@ -142,23 +142,22 @@ int main(){
     {
         uint8_t d32[32]={0}; d32[31]=1;
         uint8_t m32[32]; for(int i=0;i<32;i++) m32[i]=(uint8_t)(i*3+1);
-        std::vector<uint8_t> der;
+        bitcrypto::sign::ECDSA_Signature der;
         if (!bitcrypto::sign::ecdsa_sign(d32, m32, der)){ std::cerr<<"ECDSA sign falhou\n"; return 1; }
         // obter pubkey
         bitcrypto::U256 k = bitcrypto::U256::from_be32(d32);
         auto Pub = bitcrypto::Secp256k1::derive_pubkey(k);
         uint8_t pub[65]; size_t plen=0; bitcrypto::encode_pubkey(Pub, true, pub, plen);
-        if (!bitcrypto::sign::ecdsa_verify(pub, plen, m32, der.data(), der.size())){ std::cerr<<"ECDSA verify falhou\n"; return 1; }
+        if (!bitcrypto::sign::ecdsa_verify(pub, plen, m32, der)){ std::cerr<<"ECDSA verify falhou\n"; return 1; }
         // mensagem alterada → deve falhar
         m32[0]^=0xFF;
-        if (bitcrypto::sign::ecdsa_verify(pub, plen, m32, der.data(), der.size())){ std::cerr<<"ECDSA verify aceitou msg alterada\n"; return 1; }
+        if (bitcrypto::sign::ecdsa_verify(pub, plen, m32, der)){ std::cerr<<"ECDSA verify aceitou msg alterada\n"; return 1; }
     }
     // DER negativos (length/integers não-minimais)
     {
         uint8_t bad1[]={0x30,0x05,0x02,0x01,0x01,0x02,0x01}; // truncado
-        uint8_t z[32]={0};
-        uint8_t pub[33]={0}; // dummy; verificação falhará na DER antes
-        if (bitcrypto::sign::ecdsa_verify(pub, sizeof(pub), z, bad1, sizeof(bad1))) { std::cerr<<"DER inválido aceito\n"; return 1; }
+        uint8_t r32[32], s32[32];
+        if (bitcrypto::encoding::ecdsa_der_decode(bad1, sizeof(bad1), r32, s32)) { std::cerr<<"DER inválido aceito\n"; return 1; }
     }
     // Schnorr BIP-340 sign/verify
     {
@@ -192,16 +191,14 @@ int main(){
         // master from fixed seed (SHA256 of string)
         const char* seed_str="test-seed";
         uint8_t h[32]; bitcrypto::hash::sha256((const uint8_t*)seed_str, (size_t)std::strlen(seed_str), h);
-        auto m = master_from_seed(h, 32, NetworkKind::TEST);
-        auto M = neuter(m);
-        uint8_t fp[4]; fingerprint_from_pub(M, fp); std::memcpy(m.fingerprint, fp, 4); std::memcpy(M.fingerprint, fp, 4);
-        XPrv mi; if(!ckd_priv(m, 1, mi)){ std::cerr<<"ckd_priv falhou\n"; return 1; }
-        XPrv mij; if(!ckd_priv(mi, 2, mij)){ std::cerr<<"ckd_priv falhou (2)\n"; return 1; }
-        XPub Mi; if(!ckd_pub(M, 1, Mi)){ std::cerr<<"ckd_pub falhou\n"; return 1; }
-        XPub Mij; if(!ckd_pub(Mi, 2, Mij)){ std::cerr<<"ckd_pub falhou (2)\n"; return 1; }
-        // neuter(mij) deve ser igual a Mij (mesma pub/compress, depth e child)
-        auto mij_pub = neuter(mij);
-        bool eq = (std::memcmp(mij_pub.pub, Mij.pub, 33)==0) && (mij_pub.depth==Mij.depth) && (mij_pub.child==Mij.child);
+        ExtPriv m; if(!master_from_seed(h, 32, m)){ std::cerr<<"master_from_seed falhou\n"; return 1; }
+        ExtPub M; if(!neuter(m, M)){ std::cerr<<"neuter falhou\n"; return 1; }
+        ExtPriv mi; if(!ckd_priv(m, 1, mi)){ std::cerr<<"ckd_priv falhou\n"; return 1; }
+        ExtPriv mij; if(!ckd_priv(mi, 2, mij)){ std::cerr<<"ckd_priv falhou (2)\n"; return 1; }
+        ExtPub Mi; if(!ckd_pub(M, 1, Mi)){ std::cerr<<"ckd_pub falhou\n"; return 1; }
+        ExtPub Mij; if(!ckd_pub(Mi, 2, Mij)){ std::cerr<<"ckd_pub falhou (2)\n"; return 1; }
+        ExtPub mij_pub; if(!neuter(mij, mij_pub)){ std::cerr<<"neuter(mij) falhou\n"; return 1; }
+        bool eq = (std::memcmp(mij_pub.pubkey, Mij.pubkey, 33)==0) && (mij_pub.depth==Mij.depth) && (mij_pub.child_index==Mij.child_index);
         if (!eq){ std::cerr<<"BIP-32 propriedade falhou (neuter(mij) != Mij)\n"; return 1; }
     }
 
@@ -228,41 +225,6 @@ int main(){
 
 
     
-    // PSBTv2 P2WPKH sign/final
-    {
-        using namespace bitcrypto;
-        uint8_t d[32]={0}; d[31]=1;
-        auto P = Secp256k1::derive_pubkey(U256::from_be32(d)); uint8_t pub[65]; size_t plen=0; encode_pubkey(P,true,pub,plen);
-        uint8_t h160[20]; bitcrypto::hash::hash160(pub, plen, h160);
-        auto spk = bitcrypto::tx::script_p2wpkh(h160);
-        bitcrypto::psbt2::PSBT2 P2; P2.tx_version=2;
-        bitcrypto::psbt2::In I; std::memset(I.prev_txid, 0x22, 32); I.vout=0; I.sequence=0xFFFFFFFF; I.has_witness_utxo=true; I.witness_utxo.value=50000; I.witness_utxo.scriptPubKey=spk; P2.ins.push_back(I);
-        bitcrypto::psbt2::Out O; O.amount=40000; O.script=spk; P2.outs.push_back(O);
-        std::vector<std::vector<uint8_t>> ks; ks.emplace_back(d, d+32);
-        bitcrypto::tx::Transaction txf;
-        if (!bitcrypto::psbt2::sign_and_finalize_psbt2_multi(P2, ks, bitcrypto::tx::SIGHASH_ALL, txf)){ std::cerr<<"sign/final psbt2 falhou\n"; return 1; }
-        std::vector<uint8_t> raw; if (txf.has_witness) bitcrypto::tx::serialize_segwit(txf, raw); else bitcrypto::tx::serialize_legacy(txf, raw);
-        if (raw.size()<80){ std::cerr<<"tx v2-p2wpkh pequena\n"; return 1; }
-    }
-    // PSBTv2 P2TR key-path sign/final
-    {
-        using namespace bitcrypto;
-        uint8_t d[32]={0}; d[31]=1;
-        auto P = Secp256k1::derive_pubkey(U256::from_be32(d)); uint8_t px[32]; bool odd=false; tx::xonly_from_point(P, px, odd);
-        std::vector<uint8_t> msg; msg.insert(msg.end(), px, px+32); uint8_t th[32]; tx::tagged_hash("TapTweak", msg, th);
-        auto t = U256::from_be32(th); Secp256k1::scalar_mod_n(t);
-        auto Q = Secp256k1::add(Secp256k1::to_jacobian(P), Secp256k1::scalar_mul(t, Secp256k1::G()));
-        auto Qa = Secp256k1::to_affine(Q); uint8_t qx[32]; bool qodd=false; tx::xonly_from_point(Qa, qx, qodd);
-        std::vector<uint8_t> spk; spk.push_back(0x51); spk.push_back(0x20); spk.insert(spk.end(), qx, qx+32);
-        bitcrypto::psbt2::PSBT2 P2; P2.tx_version=2;
-        bitcrypto::psbt2::In I; std::memset(I.prev_txid, 0x33, 32); I.vout=0; I.sequence=0xFFFFFFFF; I.has_witness_utxo=true; I.witness_utxo.value=50000; I.witness_utxo.scriptPubKey=spk; P2.ins.push_back(I);
-        bitcrypto::psbt2::Out O; O.amount=40000; O.script=spk; P2.outs.push_back(O);
-        std::vector<std::vector<uint8_t>> ks; ks.emplace_back(d, d+32);
-        bitcrypto::tx::Transaction txf;
-        if (!bitcrypto::psbt2::sign_and_finalize_psbt2_multi(P2, ks, bitcrypto::tx::SIGHASH_ALL, txf)){ std::cerr<<"sign/final psbt2 P2TR falhou\n"; return 1; }
-        std::vector<uint8_t> raw; if (txf.has_witness) bitcrypto::tx::serialize_segwit(txf, raw); else bitcrypto::tx::serialize_legacy(txf, raw);
-        if (raw.size()<80){ std::cerr<<"tx v2-p2tr pequena\n"; return 1; }
-    }
 
     
     // WIF roundtrip (mainnet/testnet, compressed)

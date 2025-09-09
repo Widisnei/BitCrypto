@@ -3,13 +3,13 @@
 #include <cstddef>
 #include <vector>
 #include <cstring>
-#include "../../BitCrypto.Core/include/bitcrypto/ec_secp256k1.h"
-#include "../../BitCrypto.Core/include/bitcrypto/mod_n.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/sha256.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/hmac.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/tagged_hash.h"
-#include "../../BitCrypto.Encoding/include/bitcrypto/encoding/der.h"
-#include "../../BitCrypto.Encoding/include/bitcrypto/encoding/taproot.h"
+#include <bitcrypto/ec_secp256k1.h>
+#include <bitcrypto/mod_n.h>
+#include <bitcrypto/hash/sha256.h>
+#include <bitcrypto/hash/hmac.h>
+#include <bitcrypto/hash/tagged_hash.h>
+#include <bitcrypto/encoding/der.h>
+#include <bitcrypto/encoding/taproot.h>
 
 namespace bitcrypto { namespace sign {
 inline void reduce_mod_n(U256& a){ Secp256k1::scalar_mod_n(a); }

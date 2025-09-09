@@ -4,13 +4,13 @@
 #include <string>
 #include <map>
 #include <cstring>
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/sha256.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/hash160.h"
-#include "../../BitCrypto.Sign/include/bitcrypto/sign/ecdsa.h"
-#include "../../BitCrypto.Encoding/include/bitcrypto/encoding/base58.h"
-#include "../../BitCrypto.Encoding/include/bitcrypto/encoding/b58check.h"
-#include "../../BitCrypto.Tx/include/bitcrypto/tx/tx.h"
-#include "../../BitCrypto.Tx/include/bitcrypto/tx/sighash.h"
+#include <bitcrypto/hash/sha256.h>
+#include <bitcrypto/hash/hash160.h>
+#include <bitcrypto/sign/ecdsa.h>
+#include <bitcrypto/encoding/base58.h>
+#include <bitcrypto/encoding/b58check.h>
+#include <bitcrypto/tx/tx.h>
+#include <bitcrypto/tx/sighash.h>
 
 namespace bitcrypto { namespace psbt {
 

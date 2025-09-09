@@ -4,15 +4,15 @@
 #include <chrono>
 #include <random>
 #include <cstring>
-#include "../../BitCrypto.Core/include/bitcrypto/ec_secp256k1.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/hash160.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/tagged_hash.h"
-#include "../../BitCrypto.Encoding/include/bitcrypto/encoding/segwit.h"
-#include "../../BitCrypto.Encoding/include/bitcrypto/encoding/taproot.h"
+#include <bitcrypto/ec_secp256k1.h>
+#include <bitcrypto/hash/hash160.h>
+#include <bitcrypto/hash/tagged_hash.h>
+#include <bitcrypto/encoding/segwit.h>
+#include <bitcrypto/encoding/taproot.h>
 
 #if defined(BITCRYPTO_WITH_CUDA)
-#include "../../BitCrypto.GPU/include/bitcrypto/gpu/ec_gpu.cuh"
-#include "../../BitCrypto.GPU/include/bitcrypto/gpu/match_gpu.cuh"
+#include <bitcrypto/gpu/ec_gpu.cuh>
+#include <bitcrypto/gpu/match_gpu.cuh>
 #include <cuda_runtime.h>
 #endif
 

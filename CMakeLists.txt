@@ -56,6 +56,7 @@ target_include_directories(bitcrypto_common INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.PSBT/include/bitcrypto
   ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.PSBTv2/include/bitcrypto
   ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Math/include/bitcrypto
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.EC/include/bitcrypto
 )
 
 if(BITCRYPTO_ENABLE_CUDA)

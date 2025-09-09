@@ -2,11 +2,11 @@
 #include <cstdint>
 #include <vector>
 #include <cstring>
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/sha256.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/hash160.h"
-#include "../../BitCrypto.Encoding/include/bitcrypto/encoding/varint.h"
-#include "../../BitCrypto.Core/include/bitcrypto/ec_secp256k1.h"
-#include "../../BitCrypto.Sign/include/bitcrypto/sign/schnorr.h"
+#include <bitcrypto/hash/sha256.h>
+#include <bitcrypto/hash/hash160.h>
+#include <bitcrypto/encoding/varint.h>
+#include <bitcrypto/ec_secp256k1.h>
+#include <bitcrypto/sign/schnorr.h>
 #include "tx.h"
 
 // Implementação Taproot (BIP340/341):

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import os, sys, re, hashlib, pathlib
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-MANIFEST = next((p for p in ROOT.iterdir() if p.name.startswith('MANIFEST_') and p.suffix=='.txt'), None)
+MANIFESTS = sorted(p for p in ROOT.iterdir() if p.name.startswith('MANIFEST_') and p.suffix=='.txt')
+MANIFEST = MANIFESTS[-1] if MANIFESTS else None
 def sha256(p):
     h=hashlib.sha256()
     with open(p, 'rb') as f:
@@ -29,6 +30,8 @@ for sh, sz, path in entries:
 for dp, dn, files in os.walk(ROOT):
     for f in files:
         rel = ('BitCrypto/'+str((pathlib.Path(dp)/f).relative_to(ROOT))).replace('\\','/')
+        if rel.startswith('BitCrypto/MANIFEST_') or rel.startswith('BitCrypto/.git/'):
+            continue
         if rel not in listed and not rel.endswith('/.'):
             print('[EXTRA]', rel); ok=False
 print('Manifesto OK' if ok else 'Manifesto divergente'); sys.exit(0 if ok else 1)

@@ -6,24 +6,24 @@
 #include <iomanip>
 #include <cstring>
 
-#include "../BitCrypto.Core/include/bitcrypto/ec_secp256k1.h"
-#include "../BitCrypto.Core/include/bitcrypto/field_n.h"
-#include "../BitCrypto.Hash/include/bitcrypto/hash/sha256.h"
-#include "../BitCrypto.Hash/include/bitcrypto/hash/hmac_sha256.h"
-#include "../BitCrypto.Hash/include/bitcrypto/hash/sha512.h"
-#include "../BitCrypto.Hash/include/bitcrypto/hash/hmac_sha512.h"
-#include "../BitCrypto.Hash/include/bitcrypto/hash/hash160.h"
-#include "../BitCrypto.Encoding/include/bitcrypto/encoding/base58.h"
-#include "../BitCrypto.Encoding/include/bitcrypto/encoding/b58check.h"
-#include "../BitCrypto.Encoding/include/bitcrypto/encoding/taproot.h"
-#include "../BitCrypto.Sign/include/bitcrypto/sign/der.h"
-#include "../BitCrypto.Sign/include/bitcrypto/sign/ecdsa.h"
-#include "../BitCrypto.Sign/include/bitcrypto/sign/schnorr.h"
-#include "../BitCrypto.KDF/include/bitcrypto/kdf/rng.h"
-#include "../BitCrypto.KDF/include/bitcrypto/kdf/pbkdf2_hmac_sha512.h"
-#include "../BitCrypto.HD/include/bitcrypto/hd/bip32.h"
-#include "../BitCrypto.HD/include/bitcrypto/hd/bip39.h"
-#include "../BitCrypto.HD/include/bitcrypto/hd/bip44.h"
+#include <bitcrypto/ec_secp256k1.h>
+#include <bitcrypto/field_n.h>
+#include <bitcrypto/hash/sha256.h>
+#include <bitcrypto/hash/hmac_sha256.h>
+#include <bitcrypto/hash/sha512.h>
+#include <bitcrypto/hash/hmac_sha512.h>
+#include <bitcrypto/hash/hash160.h>
+#include <bitcrypto/encoding/base58.h>
+#include <bitcrypto/encoding/b58check.h>
+#include <bitcrypto/encoding/taproot.h>
+#include <bitcrypto/sign/der.h>
+#include <bitcrypto/sign/ecdsa.h>
+#include <bitcrypto/sign/schnorr.h>
+#include <bitcrypto/rng/rng.h>
+#include <bitcrypto/kdf/pbkdf2_hmac_sha512.h>
+#include <bitcrypto/hd/bip32.h>
+#include <bitcrypto/hd/bip39.h>
+#include <bitcrypto/hd/bip44.h>
 
 using namespace bitcrypto;
 

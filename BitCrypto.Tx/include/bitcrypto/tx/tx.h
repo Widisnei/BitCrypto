@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include <cstring>
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/sha256.h"
+#include <bitcrypto/hash/sha256.h>
 
 namespace bitcrypto { namespace tx {
 

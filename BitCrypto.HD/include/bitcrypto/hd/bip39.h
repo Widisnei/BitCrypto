@@ -5,8 +5,8 @@
 #include <vector>
 #include <cstring>
 #include <algorithm>
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/sha256.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/pbkdf2_hmac_sha512.h"
+#include <bitcrypto/hash/sha256.h>
+#include <bitcrypto/hash/pbkdf2_hmac_sha512.h>
 
 namespace bitcrypto { namespace hd {
 

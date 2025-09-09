@@ -5,11 +5,11 @@
 #include <vector>
 #include <array>
 #include <algorithm>
-#include "../../BitCrypto.Core/include/bitcrypto/ec_secp256k1.h"
-#include "../../BitCrypto.Core/include/bitcrypto/field_n.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/hmac_sha512.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/hash160.h"
-#include "../../BitCrypto.Encoding/include/bitcrypto/encoding/b58check.h"
+#include <bitcrypto/ec_secp256k1.h>
+#include <bitcrypto/field_n.h>
+#include <bitcrypto/hash/hmac_sha512.h>
+#include <bitcrypto/hash/hash160.h>
+#include <bitcrypto/encoding/b58check.h>
 
 namespace bitcrypto { namespace hd {
 

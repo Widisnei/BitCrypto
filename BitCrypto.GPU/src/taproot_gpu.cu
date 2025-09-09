@@ -1,7 +1,7 @@
 #include "include/bitcrypto/gpu/taproot_gpu.cuh"
 #include "include/bitcrypto/gpu/hash_gpu.cuh"
-#include "../../BitCrypto.Core/include/bitcrypto/ec_secp256k1.h"
-#include "../../BitCrypto.Core/include/bitcrypto/base.h"
+#include <bitcrypto/ec_secp256k1.h>
+#include <bitcrypto/base.h>
 #include <cuda_runtime.h>
 #include <string.h>
 

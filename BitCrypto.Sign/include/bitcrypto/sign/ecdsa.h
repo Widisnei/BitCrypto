@@ -2,10 +2,10 @@
 #include <cstdint>
 #include <cstring>
 #include <vector>
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/sha256.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/hmac.h"
-#include "../../BitCrypto.Core/include/bitcrypto/ec_secp256k1.h"
-#include "../../BitCrypto.Core/include/bitcrypto/ec_parse.h"
+#include <bitcrypto/hash/sha256.h>
+#include <bitcrypto/hash/hmac.h>
+#include <bitcrypto/ec_secp256k1.h>
+#include <bitcrypto/ec_parse.h>
 #include "scalar_n.h"
 #include "der.h"
 

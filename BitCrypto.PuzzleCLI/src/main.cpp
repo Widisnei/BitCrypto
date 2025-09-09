@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <iomanip>
 #include <unordered_map>
-#include "../../BitCrypto.Core/include/bitcrypto/ec_secp256k1.h"
+#include <bitcrypto/ec_secp256k1.h>
 
 using namespace bitcrypto;
 

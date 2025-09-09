@@ -4,11 +4,11 @@
 #include <fstream>
 #include <sstream>
 #include <iomanip>
-#include "../../BitCrypto.HD/include/bitcrypto/hd/bip32.h"
-#include "../../BitCrypto.HD/include/bitcrypto/hd/bip39.h"
-#include "../../BitCrypto.HD/include/bitcrypto/hd/bip44.h"
-#include "../../BitCrypto.KDF/include/bitcrypto/kdf/rng.h"
-#include "../../BitCrypto.Encoding/include/bitcrypto/encoding/b58check.h"
+#include <bitcrypto/hd/bip32.h>
+#include <bitcrypto/hd/bip39.h>
+#include <bitcrypto/hd/bip44.h>
+#include <bitcrypto/rng/rng.h>
+#include <bitcrypto/encoding/b58check.h>
 
 static bool hex_to_bytes(const std::string& hex, std::vector<uint8_t>& out){
     if (hex.size()%2) return false; out.resize(hex.size()/2);

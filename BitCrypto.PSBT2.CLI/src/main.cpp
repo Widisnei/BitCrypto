@@ -81,7 +81,7 @@ int main(int argc, char** argv){
         std::vector<uint8_t> ws; if (!bitcrypto::tx::miniscript_compile(ms_expr, ws)){ std::cerr<<"Miniscript inválido\n"; return 1; }
         uint8_t h[32]; bitcrypto::hash::sha256(ws.data(), ws.size(), h);
         std::vector<uint8_t> prog(h,h+32), spk; bitcrypto::encoding::spk_witness(0, prog, spk);
-        std::string addr; bitcrypto::encoding::segwit_addr_encode(addr, hrp, 0, prog);
+        std::string addr; bitcrypto::encoding::segwit_addr_encode(hrp, 0, prog, addr);
         std::cout<<"wscript="<<vec_to_hex(ws)<<"\n";
         std::cout<<"scriptPubKey="<<vec_to_hex(spk)<<"\n";
         std::cout<<"address="<<addr<<"\n"; return 0;

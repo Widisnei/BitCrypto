@@ -102,8 +102,7 @@ link_bitcrypto_common(BitCrypto.MSCLI)
 link_bitcrypto_common(BitCrypto.Bench)
 link_bitcrypto_common(BitCrypto.BenchCLI)
 link_bitcrypto_common(BitCrypto.Tests)
-# Suite PSBTv2 ainda incompleta; testes desabilitados por ora
-# link_bitcrypto_common(BitCrypto.PSBT2.Tests)
+link_bitcrypto_common(BitCrypto.PSBT2.Tests)
 
 if(BITCRYPTO_ENABLE_CUDA)
   link_bitcrypto_common(BitCrypto.GPU)

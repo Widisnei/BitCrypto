@@ -103,6 +103,13 @@ inline bool ecdsa_verify(const uint8_t pubkey[], size_t publen, const uint8_t ha
     } else return false;
 }
 
+inline std::vector<uint8_t> der_from_rs(const uint8_t r[32], const uint8_t s[32]){
+    std::vector<uint8_t> out; bitcrypto::encoding::ecdsa_der_encode(r, s, out); return out;
+}
+inline bool der_to_rs(const std::vector<uint8_t>& der, uint8_t r[32], uint8_t s[32]){
+    return bitcrypto::encoding::ecdsa_der_decode(der.data(), der.size(), r, s);
+}
+
 struct Schnorr_Signature { uint8_t r[32]; uint8_t s[32]; };
 inline void xor32(uint8_t* a, const uint8_t* b){ for (int i=0;i<32;i++) a[i]^=b[i]; }
 

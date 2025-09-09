@@ -182,9 +182,8 @@ int main(int argc, char** argv){
             have_node=true;
         }
         if (!have_node){ std::cerr<<"Forneça --xprv <base58> ou --xprv-from-seed <seedhex>\n"; return 1; }
-        std::vector<bitcrypto::hd::PathElem> elems; if (!bitcrypto::hd::parse_path(path_str, elems)){ std::cerr<<"caminho inválido\n"; return 1; }
-        for (auto& e : elems){
-            uint32_t idx = e.index | (e.hardened?0x80000000U:0);
+        std::vector<uint32_t> elems; if (!bitcrypto::hd::parse_bip44_path(path_str, elems)){ std::cerr<<"caminho inválido\n"; return 1; }
+        for (auto idx : elems){
             bitcrypto::hd::ExtPriv child; if (!bitcrypto::hd::ckd_priv(node, idx, child)){ std::cerr<<"ckd_priv falhou em "<<idx<<"\n"; return 1; }
             node = child;
         }
@@ -199,10 +198,10 @@ int main(int argc, char** argv){
     if (want_derive_pub){
         bitcrypto::hd::ExtPub xp{}; auto net=bitcrypto::hd::Network::MAIN;
         if (!bitcrypto::hd::from_base58_xpub(xpub_import, xp, net)){ std::cerr<<"xpub inválido\n"; return 1; }
-        std::vector<bitcrypto::hd::PathElem> elems; if (!bitcrypto::hd::parse_path(path_str, elems)){ std::cerr<<"caminho inválido\n"; return 1; }
-        for (auto& e : elems){
-            if (e.hardened){ std::cerr<<"caminho possui hardened; não suportado em xpub\n"; return 1; }
-            bitcrypto::hd::ExtPub child; if (!bitcrypto::hd::ckd_pub(xp, e.index, child)){ std::cerr<<"ckd_pub falhou em "<<e.index<<"\n"; return 1; }
+        std::vector<uint32_t> elems; if (!bitcrypto::hd::parse_bip44_path(path_str, elems)){ std::cerr<<"caminho inválido\n"; return 1; }
+        for (auto idx : elems){
+            if (idx & 0x80000000U){ std::cerr<<"caminho possui hardened; não suportado em xpub\n"; return 1; }
+            bitcrypto::hd::ExtPub child; if (!bitcrypto::hd::ckd_pub(xp, idx, child)){ std::cerr<<"ckd_pub falhou em "<<idx<<"\n"; return 1; }
             xp = child;
         }
         std::cout<<bitcrypto::hd::to_base58_xpub(xp, net)<<"\n"; return 0;

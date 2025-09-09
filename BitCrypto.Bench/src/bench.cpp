@@ -4,6 +4,7 @@
 #include <chrono>
 #include <random>
 #include <cstring>
+#include <bitcrypto/base.h>
 #include <bitcrypto/ec_secp256k1.h>
 #include <bitcrypto/hash/hash160.h>
 #include <bitcrypto/hash/tagged_hash.h>

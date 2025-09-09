@@ -23,6 +23,27 @@ inline bool read_varint(const uint8_t* in, size_t len, size_t& p, uint64_t& v){
     if (p+8>len) return false; v=0; for(int i=0;i<8;i++) v|=(uint64_t)in[p+i]<<(8*i); p+=8; return true;
 }
 
+inline bool is_p2wpkh(const std::vector<uint8_t>& spk, uint8_t out_h160[20]){
+    if (spk.size()==22 && spk[0]==0x00 && spk[1]==0x14){ std::memcpy(out_h160, &spk[2], 20); return true; }
+    return false;
+}
+inline bool is_p2tr(const std::vector<uint8_t>& spk, uint8_t out_x[32]){
+    if (spk.size()==34 && spk[0]==0x51 && spk[1]==0x20){ std::memcpy(out_x, &spk[2], 32); return true; }
+    return false;
+}
+inline bool is_p2sh(const std::vector<uint8_t>& spk, uint8_t out_h160[20]){
+    if (spk.size()==23 && spk[0]==0xA9 && spk[1]==0x14 && spk[22]==0x87){ std::memcpy(out_h160, &spk[2], 20); return true; }
+    return false;
+}
+inline bool is_p2pkh(const std::vector<uint8_t>& spk, uint8_t out_h160[20]){
+    if (spk.size()==25 && spk[0]==0x76 && spk[1]==0xA9 && spk[2]==0x14 && spk[23]==0x88 && spk[24]==0xAC){ std::memcpy(out_h160, &spk[3], 20); return true; }
+    return false;
+}
+inline bool is_p2wsh(const std::vector<uint8_t>& spk, uint8_t out_sha256[32]){
+    if (spk.size()==34 && spk[0]==0x00 && spk[1]==0x20){ std::memcpy(out_sha256, &spk[2], 32); return true; }
+    return false;
+}
+
 struct In {
     uint8_t prev_txid[32]; uint32_t vout=0; uint32_t sequence=0xFFFFFFFF;
     bool has_witness_utxo=false; bitcrypto::tx::TxOut witness_utxo;

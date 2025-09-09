@@ -51,13 +51,14 @@ static inline int wnaf_recode(const U256& k, int w, std::vector<int8_t>& out){
     return (int)out.size();
 }
 
-// MSM Pippenger com suporte a wNAF e pré-cálculo
+// MSM Pippenger com suporte a wNAF e pré-cálculo (precompute)
 static inline bool msm_pippenger(const std::vector<ECPointA>& points,
                                  const std::vector<U256>& scalars,
                                  ECPointA& out,
                                  PippengerContext* ctx=nullptr){
     size_t n = points.size();
     if (n==0 || scalars.size()!=n){ out = ECPointA{Fp::zero(),Fp::zero(),true}; return false; }
+
     ECPointJ R{Fp::zero(),Fp::zero(),Fp::zero()};
     for (size_t i=0;i<n;i++){
         ECPointJ t = Secp256k1::scalar_mul_wnaf_public(scalars[i], points[i]);

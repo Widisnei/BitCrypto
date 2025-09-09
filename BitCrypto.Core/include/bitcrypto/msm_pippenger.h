@@ -19,7 +19,7 @@ static inline int pippenger_window(size_t n){
     return 7;
 }
 
-// Recodifica escalar em wNAF de largura w
+// Recodifica escalar em wNAF de largura w (entrada pública; não const-time)
 static inline int wnaf_recode(const U256& k, int w, std::vector<int8_t>& out){
     out.clear();
     U256 d = k;

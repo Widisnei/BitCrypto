@@ -56,6 +56,8 @@ target_include_directories(bitcrypto_common INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Tx/include
   ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.PSBT/include
   ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.PSBTv2/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Sign/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Schnorr/include
   ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Math/include
   ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.EC/include
 )
@@ -85,11 +87,13 @@ link_bitcrypto_common(BitCrypto.PSBT)
 link_bitcrypto_common(BitCrypto.PSBTv2)
 link_bitcrypto_common(BitCrypto.Math)
 link_bitcrypto_common(BitCrypto.Sign)
+link_bitcrypto_common(BitCrypto.Schnorr)
 link_bitcrypto_common(BitCrypto.RNG)
 link_bitcrypto_common(BitCrypto.CLI)
 link_bitcrypto_common(BitCrypto.HD.CLI)
 link_bitcrypto_common(BitCrypto.PSBTCLI)
 link_bitcrypto_common(BitCrypto.PSBT2.CLI)
+link_bitcrypto_common(BitCrypto.SchnorrCLI)
 link_bitcrypto_common(BitCrypto.WSCLI)
 link_bitcrypto_common(BitCrypto.MSCLI)
 link_bitcrypto_common(BitCrypto.Bench)

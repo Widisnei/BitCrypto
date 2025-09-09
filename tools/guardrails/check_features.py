@@ -15,6 +15,7 @@ anchors = {
     "PuzzleCLI": "BitCrypto.PuzzleCLI/src/main.cpp",
     "WSCLI": "BitCrypto.WSCLI/src/main.cpp",
     "PSBTv2": "BitCrypto.PSBTv2/include/bitcrypto/psbt2/psbt_v2.h",
+    "msm_pippenger.h": "BitCrypto.Core/include/bitcrypto/msm_pippenger.h",
 }
 
 tokens = {
@@ -29,6 +30,7 @@ tokens = {
     "PuzzleCLI": ["--kangaroo"],
     "WSCLI": ["witness_items=", "witness_sizes=", "witness_preview=", "tap_control_block_depth="],
     "PSBTv2": ["unknown_in_kv"],
+    "msm_pippenger.h": ["wNAF", "precompute"],
 }
 
 ok = True

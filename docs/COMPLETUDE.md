@@ -32,6 +32,7 @@ Durante as séries 0.x e 1.x foram introduzidas as assinaturas determinísticas 
 - Expansão do *pretty‑printer* de PSBT (**WSCLI**) com `witness_preview=[…]`, exibindo os primeiros e últimos 8 bytes de cada elemento da witness de forma segura.
 - Guard‑rails reforçados com tokens adicionais para EC (wNAF/precompute) e preview de witness; manifesto e integridade validados.
 - Compatibilidade confirmada com Visual Studio 2022, Windows 11 x64 e CUDA 13, mantendo **zero dependências externas**.
+- Introdução da multiplicação multi‑escalar **MSM Pippenger** com janelas adaptativas, suporte a **wNAF** e contexto opcional de **precompute**.
 
 ## Notas adicionais
 

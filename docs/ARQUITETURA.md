@@ -6,7 +6,7 @@ BitCrypto é uma biblioteca modular escrita em C++/CUDA para operações criptog
 
 Os principais módulos são:
 
-- **BitCrypto.Core** — fornece primitivas de aritmética: tipos `U256`, campos `Fp` (p=2^256−2^32−977) e `Fn` (ordem n da curva), operações de ponto em coordenadas Jacobianas e utilitários de segurança.  Inclui otimizações de multiplicação escalar com **wNAF (janela 4)** e pré‑cálculo de G para operações `s·G` e uma ladder constante para `s·P` gerais.
+- **BitCrypto.Core** — fornece primitivas de aritmética: tipos `U256`, campos `Fp` (p=2^256−2^32−977) e `Fn` (ordem n da curva), operações de ponto em coordenadas Jacobianas e utilitários de segurança.  Inclui otimizações de multiplicação escalar com **wNAF (janela 4)** e pré‑cálculo de G para operações `s·G`, **MSM Pippenger** com janelas adaptativas e contexto de **precompute**, além de uma ladder constante para `s·P` gerais.
 - **BitCrypto.Hash** — implementa funções de hash `SHA‑256` (com unrolling moderado) e `SHA‑512`, `RIPEMD‑160`, HMACs (`HMAC‑SHA256`/`HMAC‑SHA512`), derivação de chave **PBKDF2‑HMAC‑SHA512**, `HASH160` e `sha256_tagged` para assinaturas Schnorr/Taproot.
 - **BitCrypto.Encoding** — trata da representação textual de chaves e endereços: codificadores Base58/Base58Check, Bech32/Bech32m, WIF (privada), conversão entre formatos de endereço (**P2PKH**, **P2WPKH**, **P2TR**) e detecção automática de tipo de endereço.  Inclui codificação e decodificação de **xprv/xpub** (BIP‑32).
 - **BitCrypto.KDF** — abstração de geração de entropia utilizando a API nativa do Windows (`BCryptGenRandom`), sem dependências de bibliotecas de terceiros.

@@ -6,7 +6,7 @@ BitCrypto é uma biblioteca **sem dependências externas** (apenas C++/CUDA/VS20
 
 BitCrypto é organizado em diversos submódulos coesos:
 
-- **Core**: tipos numéricos (`U256`), campos de curva (`Fp` e `Fn`) com redução pseudo‑Mersenne, operações de ponto em coordenadas Jacobianas, escalar com *ladder* constante e otimizações **wNAF (janela 4) com pré‑cálculo** para `s·G`, além de utilitários como `secure_memzero`.
+- **Core**: tipos numéricos (`U256`), campos de curva (`Fp` e `Fn`) com redução pseudo‑Mersenne, operações de ponto em coordenadas Jacobianas, escalar com *ladder* constante e otimizações **wNAF (janela 4) com pré‑cálculo** para `s·G`, além de **MSM Pippenger** com janelas adaptativas e contexto de **precompute**, bem como utilitários como `secure_memzero`.
 - **Hash**: `SHA‑256`/`SHA‑512`, `RIPEMD‑160`, HMACs (`HMAC‑SHA256`/`HMAC‑SHA512`), `PBKDF2‑HMAC‑SHA512`, `HASH160` e `sha256_tagged` (BIP‑340/341).
 - **Encoding**: codificadores Base58/Base58Check, Bech32/Bech32m, WIF (encode/decode), tratamento de endereços **P2PKH**, **P2WPKH** e **P2TR**, bem como `detect_address_kind` e codificação/decodificação de xprv/xpub.
 - **KDF & HD**: wrapper de RNG via Windows CNG (`BCryptGenRandom`); derivação de carteiras HD conforme BIP‑32/39/44 (mnemonic → seed, CKD priv/pub, xprv/xpub).

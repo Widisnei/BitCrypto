@@ -103,6 +103,7 @@ link_bitcrypto_common(BitCrypto.Bench)
 # link_bitcrypto_common(BitCrypto.BenchCLI)
 link_bitcrypto_common(BitCrypto.Tests)
 link_bitcrypto_common(BitCrypto.PSBT2.Tests)
+link_bitcrypto_common(BitCrypto.Core/tests)
 
 if(BITCRYPTO_ENABLE_CUDA)
   link_bitcrypto_common(BitCrypto.GPU)

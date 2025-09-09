@@ -4,7 +4,6 @@
 #include <cstring>
 #include <bitcrypto/hash/sha256.h>
 #include <bitcrypto/hash/hash160.h>
-#include <bitcrypto/encoding/varint.h>
 #include <bitcrypto/ec_secp256k1.h>
 #include <bitcrypto/sign/schnorr.h>
 #include "tx.h"

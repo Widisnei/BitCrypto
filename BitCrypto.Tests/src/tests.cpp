@@ -14,7 +14,6 @@
 #include <bitcrypto/encoding/taproot.h>
 #include <bitcrypto/psbt2/psbt_v2.h>
 #include <bitcrypto/psbt2/psbt_v2_sign.h>
-#include <bitcrypto/scripts/descriptor.h>
 
 using namespace bitcrypto;
 

@@ -5,12 +5,14 @@ using UnknownKV = std::pair<std::vector<uint8_t>, std::vector<uint8_t>>; // unkn
 #include <string>
 #include <cstring>
 #include <utility>
-#include <bitcrypto/encoding/varint.h>
 #include <bitcrypto/encoding/base64.h>
 #include <bitcrypto/tx/tx.h>
-#include <bitcrypto/psbt/psbt.h>
+#include <bitcrypto/psbt/psbt.h> // write_varint/read_varint
 
 namespace bitcrypto { namespace psbt2 {
+
+using bitcrypto::psbt::write_varint;
+using bitcrypto::psbt::read_varint;
 
 struct In {
     uint8_t prev_txid[32]; uint32_t vout=0; uint32_t sequence=0xFFFFFFFF;
@@ -35,9 +37,9 @@ struct PSBT2 {
     std::vector<uint8_t> serialize() const{
         using namespace bitcrypto::encoding;
         std::vector<uint8_t> out;
-        const uint8_t magic[5]={0x70,0x73,0x62,0x74,0xff
-    std::vector<UnknownKV> unknown_globals; // unknown_in_kv
-}; out.insert(out.end(), magic, magic+5);
+        const uint8_t magic[5]={0x70,0x73,0x62,0x74,0xff};
+        std::vector<UnknownKV> unknown_globals; // unknown_in_kv
+        out.insert(out.end(), magic, magic+5);
         // PSBT_GLOBAL_VERSION (0xFB) = 2
         out.push_back(0x01); out.push_back(0xFB); out.push_back(0x01); out.push_back(0x02);
         // PSBT_GLOBAL_TX_VERSION (0x02)

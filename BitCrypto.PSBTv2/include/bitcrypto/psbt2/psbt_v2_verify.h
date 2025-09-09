@@ -9,26 +9,6 @@
 
 namespace bitcrypto { namespace psbt2 {
 
-inline bool is_p2wpkh(const std::vector<uint8_t>& spk, uint8_t out_h160[20]){
-    if (spk.size()==22 && spk[0]==0x00 && spk[1]==0x14){ std::memcpy(out_h160, &spk[2], 20); return true; }
-    return false;
-}
-inline bool is_p2tr(const std::vector<uint8_t>& spk, uint8_t out_x[32]){
-    if (spk.size()==34 && spk[0]==0x51 && spk[1]==0x20){ std::memcpy(out_x, &spk[2], 32); return true; }
-    return false;
-}
-inline bool is_p2pkh(const std::vector<uint8_t>& spk, uint8_t out_h160[20]){
-    if (spk.size()==25 && spk[0]==0x76 && spk[1]==0xA9 && spk[2]==0x14 && spk[23]==0x88 && spk[24]==0xAC){ std::memcpy(out_h160, &spk[3], 20); return true; }
-    return false;
-}
-inline bool is_p2wsh(const std::vector<uint8_t>& spk, uint8_t out_sha256[32]){
-    if (spk.size()==34 && spk[0]==0x00 && spk[1]==0x20){ std::memcpy(out_sha256, &spk[2], 32); return true; }
-    return false;
-}
-inline bool is_p2sh(const std::vector<uint8_t>& spk, uint8_t out_h160[20]){
-    if (spk.size()==23 && spk[0]==0xA9 && spk[1]==0x14 && spk[22]==0x87){ std::memcpy(out_h160, &spk[2], 20); return true; }
-    return false;
-}
 
 inline bool verify_psbt2(const PSBT2& P, std::string& err){
     for (size_t oi=0; oi<P.outs.size(); ++oi){ if (P.outs[oi].amount==0){ err="Saída "+std::to_string(oi)+": amount deve ser > 0"; return false; } }

@@ -31,13 +31,14 @@ struct Fp{
     BITCRYPTO_HD inline static Fp mul(const Fp& a,const Fp& b){ Fp r; mont_mul(a.v,b.v,r.v); return r; }
     BITCRYPTO_HD inline static Fp sqr(const Fp& a){ return mul(a,a); }
     BITCRYPTO_HD inline static Fp pow(const Fp& a,const U256& e){ Fp base=a; Fp res=from_u256_nm(U256::one()); for(int i=255;i>=0;i--){ res=sqr(res); uint64_t w=e.v[i/64]; uint64_t bit=(w>>(i%64))&1ULL; Fp tmp=mul(res,base); uint64_t m=0-bit; for(int j=0;j<4;j++){ uint64_t x=(res.v[j]^tmp.v[j])&m; res.v[j]^=x; } } return res; }
-    BITCRYPTO_HD inline static Fp inv(const Fp& a){ U256 e{{0xFFFFFFFEFFFFFC2DULL,0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL}}; return pow(a,e); }
-};
-}
-
+    BITCRYPTO_HD inline static Fp inv(const Fp& a){
+        U256 e{{0xFFFFFFFEFFFFFC2DULL,0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL}};
+        return pow(a,e);
+    }
     // sqrt em Fp: p % 4 == 3 ⇒ sqrt(a) = a^{(p+1)/4}
     BITCRYPTO_HD inline static Fp sqrt(const Fp& a){
-        // expoente e = (p+1)/4
         U256 e{{0xFFFFFFFFBFFFFF0CULL,0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL,0x3FFFFFFFFFFFFFFFULL}}; // (p+1)/4
         return pow(a, e);
     }
+};
+}

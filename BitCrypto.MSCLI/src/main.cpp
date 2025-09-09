@@ -2,16 +2,20 @@
 #include <vector>
 #include <string>
 #include <iomanip>
+#include <array>
 #include <bitcrypto/hash/sha256.h>
 #include <bitcrypto/hash/hash160.h>
 #include <bitcrypto/encoding/bech32.h>
 #include <bitcrypto/tx/miniscript.h>
 #include <bitcrypto/tx/tapscript.h>
+#include <bitcrypto/tx/taproot.h>
 
 static std::string hex(const std::vector<uint8_t>& v){ static const char* he="0123456789abcdef"; std::string s; s.resize(v.size()*2); for(size_t i=0;i<v.size();++i){ s[2*i]=he[v[i]>>4]; s[2*i+1]=he[v[i]&15]; } return s; }
 
 int main(int argc, char** argv){
-    bool wscript=false, p2wsh=false, p2shwsh=false, wpkh=false, p2shwpkh=false, analyze=false; std::string expr; std::string hrp="tb";
+    bool wscript=false, p2wsh=false, p2shwsh=false, wpkh=false, p2shwpkh=false, analyze=false;
+    bool tapscript_out=false, suggest=false;
+    std::string expr; std::string hrp="tb";
     for (int i=1;i<argc;i++){
         std::string a=argv[i];
         if (a=="--wscript-from-ms" && i+1<argc){ wscript=true; expr=argv[++i]; }
@@ -40,7 +44,7 @@ int main(int argc, char** argv){
         std::vector<uint8_t> spk; spk.push_back(0x00); spk.push_back(0x14); spk.insert(spk.end(), prog.begin(), prog.end());
         if (wpkh){
             std::cout<<"scriptPubKey="; for(auto b:spk) std::cout<<std::hex<<std::nouppercase<<std::setfill('0')<<std::setw(2)<<(int)b; std::cout<<"\n";
-            std::string addr; bitcrypto::encoding::segwit_addr_encode(addr, hrp, 0, prog);
+            std::string addr; bitcrypto::encoding::segwit_addr_encode(hrp, 0, prog, addr);
             std::cout<<"address="<<addr<<"\n";
             return 0;
         } else {
@@ -73,7 +77,7 @@ int main(int argc, char** argv){
         // Compute program hash (wsh)
         uint8_t h[32]; bitcrypto::hash::sha256(ws.data(), ws.size(), h);
         std::vector<uint8_t> prog(h, h+32);
-        std::string addr; bitcrypto::encoding::segwit_addr_encode(addr, hrp, 0, prog);
+        std::string addr; bitcrypto::encoding::segwit_addr_encode(hrp, 0, prog, addr);
         std::cout<<"wscript="<<hex(ws)<<"\n";
         std::cout<<"wsh="; for(int i=0;i<32;i++){ static const char* he="0123456789abcdef"; std::cout<<he[h[i]>>4]<<he[h[i]&15]; } std::cout<<"\n";
         if (after_n) std::cout<<"after="<<after_n<<"\n";
@@ -90,7 +94,7 @@ int main(int argc, char** argv){
     std::vector<uint8_t> spk_wsh; spk_wsh.push_back(0x00); spk_wsh.push_back(0x20); spk_wsh.insert(spk_wsh.end(), prog.begin(), prog.end());
     if (p2wsh){
         std::cout<<"scriptPubKey="<<hex(spk_wsh)<<"\n";
-        std::string addr; bitcrypto::encoding::segwit_addr_encode(addr, hrp, 0, prog);
+        std::string addr; bitcrypto::encoding::segwit_addr_encode(hrp, 0, prog, addr);
         std::cout<<"address="<<addr<<"\n";
     } else if (p2shwsh){
         std::vector<uint8_t> redeem = spk_wsh; uint8_t h160r[20]; bitcrypto::hash::hash160(redeem.data(), redeem.size(), h160r);

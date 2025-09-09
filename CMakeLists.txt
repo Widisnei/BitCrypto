@@ -42,21 +42,26 @@ if(BITCRYPTO_ENABLE_LTO)
   endif()
 endif()
 
+include(CTest) # habilita alvos de teste e opção BUILD_TESTING
+
 add_library(bitcrypto_common INTERFACE)
 target_compile_definitions(bitcrypto_common INTERFACE
   NOMINMAX _CRT_SECURE_NO_WARNINGS
   BITCRYPTO_VERSION="${BITCRYPTO_VERSION_STRING}")
 target_include_directories(bitcrypto_common INTERFACE
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Core/include/bitcrypto
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Hash/include/bitcrypto
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Encoding/include/bitcrypto
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.KDF/include/bitcrypto
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.HD/include/bitcrypto
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Tx/include/bitcrypto
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.PSBT/include/bitcrypto
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.PSBTv2/include/bitcrypto
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Math/include/bitcrypto
-  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.EC/include/bitcrypto
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Core/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Hash/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Encoding/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.KDF/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.HD/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.RNG/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Tx/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.PSBT/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.PSBTv2/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Sign/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Schnorr/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Math/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.EC/include
 )
 
 if(BITCRYPTO_ENABLE_CUDA)
@@ -81,18 +86,21 @@ link_bitcrypto_common(BitCrypto.KDF)
 link_bitcrypto_common(BitCrypto.HD)
 link_bitcrypto_common(BitCrypto.Tx)
 link_bitcrypto_common(BitCrypto.PSBT)
-link_bitcrypto_common(BitCrypto.PSBTv2)
+# PSBTv2 ainda em revisão
+link_bitcrypto_common(BitCrypto.PSBTv2) # habilitado
 link_bitcrypto_common(BitCrypto.Math)
 link_bitcrypto_common(BitCrypto.Sign)
+link_bitcrypto_common(BitCrypto.Schnorr)
 link_bitcrypto_common(BitCrypto.RNG)
-link_bitcrypto_common(BitCrypto.CLI)
-link_bitcrypto_common(BitCrypto.HD.CLI)
-link_bitcrypto_common(BitCrypto.PSBTCLI)
-link_bitcrypto_common(BitCrypto.PSBT2.CLI)
-link_bitcrypto_common(BitCrypto.WSCLI)
-link_bitcrypto_common(BitCrypto.MSCLI)
+# link_bitcrypto_common(BitCrypto.CLI)
+# link_bitcrypto_common(BitCrypto.HD.CLI)
+# link_bitcrypto_common(BitCrypto.PSBTCLI)
+# link_bitcrypto_common(BitCrypto.PSBT2.CLI)
+# link_bitcrypto_common(BitCrypto.SchnorrCLI)
+# link_bitcrypto_common(BitCrypto.WSCLI)
+# link_bitcrypto_common(BitCrypto.MSCLI)
 link_bitcrypto_common(BitCrypto.Bench)
-link_bitcrypto_common(BitCrypto.BenchCLI)
+# link_bitcrypto_common(BitCrypto.BenchCLI)
 link_bitcrypto_common(BitCrypto.Tests)
 link_bitcrypto_common(BitCrypto.PSBT2.Tests)
 

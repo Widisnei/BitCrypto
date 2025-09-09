@@ -5,17 +5,51 @@ using UnknownKV = std::pair<std::vector<uint8_t>, std::vector<uint8_t>>; // unkn
 #include <string>
 #include <cstring>
 #include <utility>
-#include <bitcrypto/encoding/varint.h>
 #include <bitcrypto/encoding/base64.h>
 #include <bitcrypto/tx/tx.h>
-#include <bitcrypto/psbt/psbt.h>
+#include <bitcrypto/psbt/psbt.h> // write_varint/read_varint
 
 namespace bitcrypto { namespace psbt2 {
+
+using bitcrypto::psbt::write_varint;
+using bitcrypto::psbt::read_varint;
+
+// Leitura de varint a partir de ponteiro cru
+inline bool read_varint(const uint8_t* in, size_t len, size_t& p, uint64_t& v){
+    if (p>=len) return false; uint8_t ch=in[p++];
+    if (ch<0xFD){ v=ch; return true; }
+    if (ch==0xFD){ if (p+2>len) return false; v = (uint64_t)in[p] | ((uint64_t)in[p+1]<<8); p+=2; return true; }
+    if (ch==0xFE){ if (p+4>len) return false; v=0; for(int i=0;i<4;i++) v|=(uint64_t)in[p+i]<<(8*i); p+=4; return true; }
+    if (p+8>len) return false; v=0; for(int i=0;i<8;i++) v|=(uint64_t)in[p+i]<<(8*i); p+=8; return true;
+}
+
+inline bool is_p2wpkh(const std::vector<uint8_t>& spk, uint8_t out_h160[20]){
+    if (spk.size()==22 && spk[0]==0x00 && spk[1]==0x14){ std::memcpy(out_h160, &spk[2], 20); return true; }
+    return false;
+}
+inline bool is_p2tr(const std::vector<uint8_t>& spk, uint8_t out_x[32]){
+    if (spk.size()==34 && spk[0]==0x51 && spk[1]==0x20){ std::memcpy(out_x, &spk[2], 32); return true; }
+    return false;
+}
+inline bool is_p2sh(const std::vector<uint8_t>& spk, uint8_t out_h160[20]){
+    if (spk.size()==23 && spk[0]==0xA9 && spk[1]==0x14 && spk[22]==0x87){ std::memcpy(out_h160, &spk[2], 20); return true; }
+    return false;
+}
+inline bool is_p2pkh(const std::vector<uint8_t>& spk, uint8_t out_h160[20]){
+    if (spk.size()==25 && spk[0]==0x76 && spk[1]==0xA9 && spk[2]==0x14 && spk[23]==0x88 && spk[24]==0xAC){ std::memcpy(out_h160, &spk[3], 20); return true; }
+    return false;
+}
+inline bool is_p2wsh(const std::vector<uint8_t>& spk, uint8_t out_sha256[32]){
+    if (spk.size()==34 && spk[0]==0x00 && spk[1]==0x20){ std::memcpy(out_sha256, &spk[2], 32); return true; }
+    return false;
+}
 
 struct In {
     uint8_t prev_txid[32]; uint32_t vout=0; uint32_t sequence=0xFFFFFFFF;
     bool has_witness_utxo=false; bitcrypto::tx::TxOut witness_utxo;
     bool has_non_witness_utxo=false; bitcrypto::tx::Transaction non_witness_utxo;
+    bool has_redeem_script=false; std::vector<uint8_t> redeem_script;
+    bool has_witness_script=false; std::vector<uint8_t> witness_script;
     // partial signatures (pub, sig)
     std::vector<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> partial_sigs;
 
@@ -35,9 +69,9 @@ struct PSBT2 {
     std::vector<uint8_t> serialize() const{
         using namespace bitcrypto::encoding;
         std::vector<uint8_t> out;
-        const uint8_t magic[5]={0x70,0x73,0x62,0x74,0xff
-    std::vector<UnknownKV> unknown_globals; // unknown_in_kv
-}; out.insert(out.end(), magic, magic+5);
+        const uint8_t magic[5]={0x70,0x73,0x62,0x74,0xff};
+        std::vector<UnknownKV> unknown_globals; // unknown_in_kv
+        out.insert(out.end(), magic, magic+5);
         // PSBT_GLOBAL_VERSION (0xFB) = 2
         out.push_back(0x01); out.push_back(0xFB); out.push_back(0x01); out.push_back(0x02);
         // PSBT_GLOBAL_TX_VERSION (0x02)
@@ -147,32 +181,7 @@ struct PSBT2 {
 
     static bool from_base64(const std::string& b64, PSBT2& out){ std::vector<uint8_t> raw; if (!bitcrypto::encoding::base64_decode(b64, raw)) return false; return parse(raw, out); }
 
-    // ---- Conversão para PSBT v0 (para reusar signer robusto e extrair TX com witnesses) ----
-    bool to_psbt_v0(bitcrypto::psbt::PSBT& p0) const {
-        p0.unsigned_tx.version = tx_version; p0.unsigned_tx.locktime=0; p0.unsigned_tx.vin.clear(); p0.unsigned_tx.vout.clear();
-        p0.inputs.clear(); p0.outputs.clear();
-        // vin/vout
-        for (const auto& i : ins){
-            bitcrypto::tx::TxIn in; std::memcpy(in.prevout.txid, i.prev_txid, 32); in.prevout.vout=i.vout; in.sequence=i.sequence;
-            p0.unsigned_tx.vin.push_back(in);
-        }
-        for (const auto& o : outs){
-            bitcrypto::tx::TxOut to; to.value=o.amount; to.scriptPubKey=o.script; p0.unsigned_tx.vout.push_back(to);
-        }
-        // maps
-        p0.inputs.resize(ins.size()); p0.outputs.resize(outs.size());
-        for (size_t i=0;i<ins.size(); ++i){
-            if (ins[i].has_witness_utxo){
-                p0.inputs[i].has_witness_utxo=true; p0.inputs[i].witness_utxo=ins[i].witness_utxo; p0.inputs[i].sighash_type=bitcrypto::tx::SIGHASH_ALL;
-            } else if (ins[i].has_non_witness_utxo){
-                p0.inputs[i].has_non_witness_utxo=true; p0.inputs[i].sighash_type=bitcrypto::tx::SIGHASH_ALL;
-            } else {
-                // não suportado
-                return false;
-            }
-        }
-        return true;
-    }
+    // Conversão para PSBT v0 removida nesta revisão
 };
 
 }} // ns

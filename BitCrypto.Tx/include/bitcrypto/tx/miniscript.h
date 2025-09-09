@@ -5,6 +5,7 @@
 #include <cstring>
 #include <algorithm>
 #include <sstream>
+#include <bitcrypto/tx/script.h>
 
 namespace bitcrypto { namespace tx {
 
@@ -13,12 +14,6 @@ static inline bool hex_to_bytes_ms(const std::string& hs, std::vector<uint8_t>& 
     if (hs.size()%2) return false;
     for (size_t i=0;i<hs.size(); i+=2){ int a=h2n(hs[i]), b=h2n(hs[i+1]); if(a<0||b<0){ out.clear(); return false; } out.push_back((uint8_t)((a<<4)|b)); }
     return true;
-}
-static inline void push_data(std::vector<uint8_t>& s, const std::vector<uint8_t>& d){
-    if (d.size() < 0x4c){ s.push_back((uint8_t)d.size()); }
-    else if (d.size() <= 0xFF){ s.push_back(0x4c); s.push_back((uint8_t)d.size()); }
-    else { s.push_back(0x4d); s.push_back((uint8_t)(d.size()&0xFF)); s.push_back((uint8_t)((d.size()>>8)&0xFF)); }
-    s.insert(s.end(), d.begin(), d.end());
 }
 static inline void op_small(std::vector<uint8_t>& s, int v){
     if (v==0) { s.push_back(0x00); return; }
@@ -93,7 +88,7 @@ inline bool miniscript_compile(const std::string& minis, std::vector<uint8_t>& w
     if (starts_with("pk(")){
         std::string hex = inside_paren(); std::vector<uint8_t> pub; if(!hex_to_bytes_ms(hex, pub)) return false;
         if (!(pub.size()==33 || pub.size()==65)) return false;
-        push_data(wscript, pub); wscript.push_back(0xAC); return true; // OP_CHECKSIG
+        push_data(pub, wscript); wscript.push_back(0xAC); return true; // OP_CHECKSIG
     }
     if (starts_with("pkh(")){
         std::string hex = inside_paren(); std::vector<uint8_t> h160; if(!hex_to_bytes_ms(hex, h160)) return false;
@@ -112,7 +107,7 @@ inline bool miniscript_compile(const std::string& minis, std::vector<uint8_t>& w
         for (size_t i=1;i<toks.size();++i){
             std::vector<uint8_t> pub; if (!hex_to_bytes_ms(toks[i], pub)) return false;
             if (!(pub.size()==33 || pub.size()==65)) return false;
-            push_data(wscript, pub);
+            push_data(pub, wscript);
         }
         op_small(wscript, n); wscript.push_back(0xAE); return true; // OP_CHECKMULTISIG
     }
@@ -128,7 +123,7 @@ inline bool miniscript_compile(const std::string& minis, std::vector<uint8_t>& w
         }
         std::sort(pubs.begin(), pubs.end(), [](const std::vector<uint8_t>& a, const std::vector<uint8_t>& b){ return a<b; });
         op_small(wscript, mreq);
-        for (auto& pub : pubs) push_data(wscript, pub);
+        for (auto& pub : pubs) push_data(pub, wscript);
         op_small(wscript, (int)pubs.size()); wscript.push_back(0xAE); return true;
     }
     if (starts_with("thresh(")){
@@ -141,11 +136,11 @@ inline bool miniscript_compile(const std::string& minis, std::vector<uint8_t>& w
         wscript.push_back(0x00);
         // first key -> CHECKSIG
         std::vector<uint8_t> pub1; if (!hex_to_bytes_ms(toks[1], pub1)) return false; if (!(pub1.size()==33 || pub1.size()==65)) return false;
-        push_data(wscript, pub1); wscript.push_back(0xAC);
+        push_data(pub1, wscript); wscript.push_back(0xAC);
         // remaining -> CHECKSIGADD
         for (size_t i=2;i<toks.size(); ++i){
             std::vector<uint8_t> pk; if (!hex_to_bytes_ms(toks[i], pk)) return false; if (!(pk.size()==33 || pk.size()==65)) return false;
-            push_data(wscript, pk); wscript.push_back(0xBA); // OP_CHECKSIGADD
+            push_data(pk, wscript); wscript.push_back(0xBA); // OP_CHECKSIGADD
         }
         // compare to m
         push_num(wscript, (uint64_t)mreq); wscript.push_back(0x9C); // OP_NUMEQUAL

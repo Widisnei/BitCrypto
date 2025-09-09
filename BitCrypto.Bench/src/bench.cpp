@@ -4,6 +4,7 @@
 #include <chrono>
 #include <random>
 #include <cstring>
+#include <bitcrypto/base.h>
 #include <bitcrypto/ec_secp256k1.h>
 #include <bitcrypto/hash/hash160.h>
 #include <bitcrypto/hash/tagged_hash.h>
@@ -157,6 +158,6 @@ int main(int argc, char** argv){
             fclose(f); std::cout<<"Markdown salvo em "<<out_md<<"\n";
         } else std::cerr<<"Falha ao abrir MD: "<<out_md<<"\n";
     }
-    bitcrypto::secure_memzero(privs.data(), privs.size());
+    secure_memzero(privs.data(), privs.size());
     return 0;
 }

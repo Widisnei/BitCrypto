@@ -20,8 +20,28 @@ inline void ripemd160_compress(uint32_t h[5], const uint8_t block[64]){
     uint32_t tmp = h[1] + c + D; h[1]=h[2] + d + E; h[2]=h[3] + e + A; h[3]=h[4] + a + B; h[4]=h[0] + b + C; h[0]=tmp;
 }
 inline void ripemd160_update(RIPEMD160Ctx& c,const uint8_t* d,size_t n){
-    c.total_len+=n; size_t i=0; if(c.idx){ size_t t=64-c.idx; if(t>n) t=n; std::memcpy(c.buf+c.idx,d,t); c.idx+=t; i+=t; if(c.idx==64){ ripemd160_compress(c.h,c.buf); c.idx=0; } }
-    for(;i+64<=n;i+=64) ripemd160_compress(c.h,d+i); size_t rem=n-i; if(rem){ std::memcpy(c.buf,d+i,rem); c.idx=rem; }
+    c.total_len += n;
+    size_t i = 0;
+    if (c.idx){
+        size_t t = 64 - c.idx;
+        if (t > n) t = n;
+        std::memcpy(c.buf + c.idx, d, t);
+        c.idx += t;
+        i += t;
+        if (c.idx == 64){
+            ripemd160_compress(c.h, c.buf);
+            c.idx = 0;
+        }
+    }
+    // processa blocos completos de 64 bytes
+    for (; i + 64 <= n; i += 64){
+        ripemd160_compress(c.h, d + i);
+    }
+    size_t rem = n - i;
+    if (rem){
+        std::memcpy(c.buf, d + i, rem);
+        c.idx = rem;
+    }
 }
 inline void ripemd160_final(RIPEMD160Ctx& c,uint8_t out[20]){
     uint8_t pad[128]; size_t padlen=0; pad[padlen++]=0x80; size_t rem=(c.idx+1)%64; size_t fill=(rem<=56)?(56-rem):(56+64-rem); std::memset(pad+padlen,0,fill); padlen+=fill;

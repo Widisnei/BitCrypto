@@ -4,7 +4,7 @@
 #include <vector>
 #include <cstring>
 #include <bitcrypto/ec_secp256k1.h>
-#include <bitcrypto/mod_n.h>
+#include <bitcrypto/field_n.h>
 #include <bitcrypto/hash/sha256.h>
 #include <bitcrypto/hash/hmac.h>
 #include <bitcrypto/hash/tagged_hash.h>
@@ -60,6 +60,11 @@ inline bool ecdsa_sign(const uint8_t priv32[32], const uint8_t hash32[32], ECDSA
     return !is_zero32(sig.s);
 }
 
+// Alias de compatibilidade com a nomenclatura anterior
+inline bool ecdsa_sign_rfc6979(const uint8_t priv32[32], const uint8_t hash32[32], ECDSA_Signature& sig){
+    return ecdsa_sign(priv32, hash32, sig, true);
+}
+
 inline bool ecdsa_verify(const uint8_t pubkey[], size_t publen, const uint8_t hash32[32], const ECDSA_Signature& sig, bool require_low_s=true){
     using namespace bitcrypto;
     if (!(publen==33 || publen==65)) return false;
@@ -96,6 +101,13 @@ inline bool ecdsa_verify(const uint8_t pubkey[], size_t publen, const uint8_t ha
         uint8_t unc[65]; size_t olen=0; encode_pubkey(Q, false, unc, olen);
         return ecdsa_verify(unc, olen, hash32, sig, require_low_s);
     } else return false;
+}
+
+inline std::vector<uint8_t> der_from_rs(const uint8_t r[32], const uint8_t s[32]){
+    std::vector<uint8_t> out; bitcrypto::encoding::ecdsa_der_encode(r, s, out); return out;
+}
+inline bool der_to_rs(const std::vector<uint8_t>& der, uint8_t r[32], uint8_t s[32]){
+    return bitcrypto::encoding::ecdsa_der_decode(der.data(), der.size(), r, s);
 }
 
 struct Schnorr_Signature { uint8_t r[32]; uint8_t s[32]; };
@@ -138,4 +150,6 @@ inline bool schnorr_verify_bip340(const uint8_t pubx32[32], const uint8_t msg32[
     uint8_t rx[32]; bool neg=false; auto Re = encoding::normalize_even_y(Ra, rx, neg); if (neg) return false;
     uint8_t r_bytes2[32]; r.to_be32(r_bytes2); for (int i=0;i<32;i++) if (rx[i]!=r_bytes2[i]) return false; return true;
 }
+
+// Aliases de compatibilidade com versões anteriores ------------------------
 }}

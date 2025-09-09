@@ -6,6 +6,15 @@ struct ECPointA{ Fp x,y; bool infinity; };
 struct Secp256k1{
     static BITCRYPTO_HD inline bool is_on_curve(const ECPointA& P){ if (P.infinity) return true; Fp y2 = Fp::sqr(P.y); Fp x3 = Fp::mul(Fp::mul(P.x,P.x), P.x); Fp rhs = Fp::add(x3, b()); return (y2.v[0]==rhs.v[0] && y2.v[1]==rhs.v[1] && y2.v[2]==rhs.v[2] && y2.v[3]==rhs.v[3]); }
     static BITCRYPTO_HD inline Fp b(){ U256 seven{{7,0,0,0}}; return Fp::from_u256_nm(seven); }
+    static BITCRYPTO_HD inline bool lift_x_even_y(const U256& x, ECPointA& P){
+        Fp X = Fp::from_u256_nm(x);
+        Fp y2 = Fp::add(Fp::mul(Fp::mul(X,X),X), b());
+        Fp Y = Fp::sqrt(y2);
+        if (is_zero_fp(Y) && !is_zero_fp(y2)) return false;
+        U256 yu = Y.to_u256_nm(); if (yu.v[0]&1ULL) Y = Fp::sub(Fp::zero(), Y);
+        P = ECPointA{X, Y, false};
+        return true;
+    }
     static BITCRYPTO_HD inline ECPointA G(){
         U256 gx{{0x59F2815B16F81798ULL,0x029BFCDB2DCE28D9ULL,0x55A06295CE870B07ULL,0x79BE667EF9DCBBACULL}};
         U256 gy{{0x9C47D08FFB10D4B8ULL,0xFD17B448A6855419ULL,0x5DA4FBFC0E1108A8ULL,0x483ADA7726A3C465ULL}};
@@ -116,10 +125,6 @@ struct Secp256k1{
             }
         }
         return R;
-    }
-        ECPointJ R0{Fp::zero(),Fp::zero(),Fp::zero()}, R1=to_jacobian(P_aff);
-        for (int i=255;i>=0;i--){ uint64_t w=k.v[i/64]; uint64_t bit=(w>>(i%64))&1ULL; uint64_t m=0-bit; cswap(R0,R1,m); ECPointJ t0=add(R0,R1); ECPointJ t1=dbl(R1); R0=t0; R1=t1; cswap(R0,R1,m); }
-        return R0;
     }
     static BITCRYPTO_HD inline void scalar_mod_n(U256& k){
         const uint64_t N[4]={0xBFD25E8CD0364141ULL,0xBAAEDCE6AF48A03BULL,0xFFFFFFFFFFFFFFFEULL,0xFFFFFFFFFFFFFFFFULL};

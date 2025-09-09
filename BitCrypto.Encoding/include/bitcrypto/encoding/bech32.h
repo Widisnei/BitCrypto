@@ -59,8 +59,8 @@ static inline bool bech32_verify_checksum(const std::string& hrp, const std::vec
 static inline const char* BECH32_ALPHABET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
 
 static inline bool bech32_encode(const std::string& hrp, const std::vector<uint8_t>& data, Bech32Variant var, std::string& out){
-    // Verifica HRP
-    if (hrp.empty() || hrp.size()<1) return false;
+    // Verifica HRP (1..83 chars)
+    if (hrp.empty() || hrp.size()<1 || hrp.size()>83) return false;
     for (char c: hrp){ if (!(33<=c && c<=126)) return false; }
     // lower-case enforcement
     std::string hrp_l = hrp; std::transform(hrp_l.begin(), hrp_l.end(), hrp_l.begin(), [](char c){ return (char)std::tolower((unsigned char)c); });
@@ -87,6 +87,7 @@ static inline bool bech32_decode(const std::string& s, std::string& hrp_out, std
     // find separator
     size_t pos = s.rfind('1'); if (pos==std::string::npos || pos < 1 || pos+7 > s.size()) return false;
     hrp_out = s.substr(0,pos);
+    if (hrp_out.size()>83) return false;
     std::string d = s.substr(pos+1);
     for (auto& c : hrp_out) c = (char)std::tolower((unsigned char)c);
     data_out.reserve(d.size());

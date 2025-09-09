@@ -86,6 +86,7 @@ link_bitcrypto_common(BitCrypto.KDF)
 link_bitcrypto_common(BitCrypto.HD)
 link_bitcrypto_common(BitCrypto.Tx)
 link_bitcrypto_common(BitCrypto.PSBT)
+# PSBTv2 ainda em revisão
 # link_bitcrypto_common(BitCrypto.PSBTv2)
 link_bitcrypto_common(BitCrypto.Math)
 link_bitcrypto_common(BitCrypto.Sign)

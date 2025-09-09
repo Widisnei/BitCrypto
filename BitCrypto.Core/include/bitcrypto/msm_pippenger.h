@@ -6,7 +6,7 @@ namespace bitcrypto {
 
 // Contexto opcional de pré-cálculo para MSM Pippenger
 struct PippengerContext {
-    int window;                                      // janela utilizada
+    int window = 0;                                  // janela utilizada
     std::vector<std::vector<ECPointA>> tables;       // tabelas de precompute
 };
 
@@ -59,13 +59,72 @@ static inline bool msm_pippenger(const std::vector<ECPointA>& points,
     size_t n = points.size();
     if (n==0 || scalars.size()!=n){ out = ECPointA{Fp::zero(),Fp::zero(),true}; return false; }
 
-    ECPointJ R{Fp::zero(),Fp::zero(),Fp::zero()};
-    for (size_t i=0;i<n;i++){
-        ECPointJ t = Secp256k1::scalar_mul_wnaf_public(scalars[i], points[i]);
-        R = Secp256k1::add(R, t);
+    int w = pippenger_window(n);
+    int WSIZE = 1<<(w-1); // número de buckets (somente ímpares)
+
+    // Constrói ou reutiliza tabelas de precompute (precompute)
+    std::vector<std::vector<ECPointA>> local_tables;
+    std::vector<std::vector<ECPointA>>* tables = &local_tables;
+    if (ctx){
+        if ((int)ctx->window != w || ctx->tables.size()!=n){
+            ctx->window = w;
+            ctx->tables.assign(n, std::vector<ECPointA>(WSIZE));
+            for (size_t i=0;i<n;i++){
+                ctx->tables[i][0] = points[i];
+                ECPointJ twoP = Secp256k1::dbl(Secp256k1::to_jacobian(points[i]));
+                ECPointJ acc = Secp256k1::to_jacobian(points[i]);
+                for (int j=1;j<WSIZE;j++){
+                    acc = Secp256k1::add(acc, twoP);
+                    ctx->tables[i][j] = Secp256k1::to_affine(acc);
+                }
+            }
+        }
+        tables = &ctx->tables;
+    } else {
+        local_tables.assign(n, std::vector<ECPointA>(WSIZE));
+        for (size_t i=0;i<n;i++){
+            local_tables[i][0] = points[i];
+            ECPointJ twoP = Secp256k1::dbl(Secp256k1::to_jacobian(points[i]));
+            ECPointJ acc = Secp256k1::to_jacobian(points[i]);
+            for (int j=1;j<WSIZE;j++){
+                acc = Secp256k1::add(acc, twoP);
+                local_tables[i][j] = Secp256k1::to_affine(acc);
+            }
+        }
     }
+
+    // wNAF recoding de todos os escalares
+    std::vector<std::vector<int8_t>> wnafs(n);
+    int max_len = 0;
+    for (size_t i=0;i<n;i++){
+        int len = wnaf_recode(scalars[i], w, wnafs[i]);
+        if (len > max_len) max_len = len;
+    }
+
+    ECPointJ R{Fp::zero(),Fp::zero(),Fp::zero()};
+    for (int pos = max_len-1; pos >= 0; --pos){
+        R = Secp256k1::dbl(R);
+        std::vector<ECPointJ> buckets(WSIZE, ECPointJ{Fp::zero(),Fp::zero(),Fp::zero()});
+        for (size_t i=0;i<n;i++){
+            int8_t digit = (pos < (int)wnafs[i].size()) ? wnafs[i][pos] : 0;
+            if (digit){
+                int idx = (abs(digit)-1)/2;
+                ECPointA T = (*tables)[i][idx];
+                if (digit < 0){ T.y = Fp::sub(Fp::zero(), T.y); }
+                buckets[idx] = Secp256k1::add(buckets[idx], Secp256k1::to_jacobian(T));
+            }
+        }
+        ECPointJ acc{Fp::zero(),Fp::zero(),Fp::zero()};
+        for (int i=WSIZE-1;i>0;--i){
+            acc = Secp256k1::add(acc, buckets[i]);
+            R = Secp256k1::add(R, acc);
+        }
+        if (!Secp256k1::is_infinity(buckets[0])){
+            R = Secp256k1::add(R, buckets[0]);
+        }
+    }
+
     out = Secp256k1::to_affine(R);
-    (void)ctx; // futuro: usar precompute
     return true;
 }
 

@@ -143,7 +143,7 @@ inline bool sign_and_finalize_psbt2_multi(const PSBT2& P, const std::vector<std:
                     for (size_t pi=0; pi<pubs.size(); ++pi){
                         for (auto& ki : infos){ if (ki.pub33==pubs[pi]){
                             std::vector<uint8_t> sc = in.witness_script; uint8_t sh[32];
-                            bitcrypto::tx::bip143_sighash(tx_out, i, sc, amts[i], sighash_type, sh);
+                            bitcrypto::tx::sighash_segwit_v0_all(tx_out, i, sc, amts[i], sh);
                             bitcrypto::sign::ECDSA_Signature sig{}; if (!bitcrypto::sign::ecdsa_sign_rfc6979(ki.priv.data(), sh, sig)) return false;
                             std::vector<uint8_t> der; bitcrypto::tx::serialize_der_sig_with_hashbyte(sig, sighash_type, der);
                             sigs.push_back(der); break;
@@ -153,7 +153,7 @@ inline bool sign_and_finalize_psbt2_multi(const PSBT2& P, const std::vector<std:
                     tx_out.vin[i].witness.clear(); tx_out.vin[i].witness.push_back(std::vector<uint8_t>()); // dummy
                     for (int k=0;k<m;++k) tx_out.vin[i].witness.push_back(sigs[k]);
                     tx_out.vin[i].witness.push_back(in.witness_script);
-                    signed_ok=true; tx_out.segwit=true; tx_out.set_segwit_if_any_witness(); continue;
+                    signed_ok=true; tx_out.has_witness=true; tx_out.set_segwit_if_any_witness(); continue;
                 }
                 // Single-sig forms (P2PK/P2PKH in wscript)
                 std::vector<uint8_t> pk33; uint8_t h160ws[20]; bool is_p2pk=false, is_p2pkh=false;
@@ -164,11 +164,11 @@ inline bool sign_and_finalize_psbt2_multi(const PSBT2& P, const std::vector<std:
                 for (auto& ki : infos){
                     bool match=false; if (is_p2pk) match=(ki.pub33==pk33); else match=(std::memcmp(h160ws, ki.h160, 20)==0);
                     if (!match) continue;
-                    std::vector<uint8_t> sc = in.witness_script; uint8_t sh[32]; bitcrypto::tx::bip143_sighash(tx_out, i, sc, amts[i], sighash_type, sh);
+                    std::vector<uint8_t> sc = in.witness_script; uint8_t sh[32]; bitcrypto::tx::sighash_segwit_v0_all(tx_out, i, sc, amts[i], sh);
                     bitcrypto::sign::ECDSA_Signature sig{}; if (!bitcrypto::sign::ecdsa_sign_rfc6979(ki.priv.data(), sh, sig)) return false;
                     std::vector<uint8_t> der; bitcrypto::tx::serialize_der_sig_with_hashbyte(sig, sighash_type, der);
                     tx_out.vin[i].witness.clear(); tx_out.vin[i].witness.push_back(der); if (is_p2pkh) tx_out.vin[i].witness.push_back(ki.pub33); tx_out.vin[i].witness.push_back(in.witness_script);
-                    signed_ok=true; tx_out.segwit=true; tx_out.set_segwit_if_any_witness(); break;
+                    signed_ok=true; tx_out.has_witness=true; tx_out.set_segwit_if_any_witness(); break;
                 }
                 if (!signed_ok) return false; continue;
             }
@@ -185,7 +185,7 @@ inline bool sign_and_finalize_psbt2_multi(const PSBT2& P, const std::vector<std:
                     ok=true; break;
                 }}
                 if (!ok) return false;
-                tx_out.segwit=true; tx_out.set_segwit_if_any_witness();
+                tx_out.has_witness=true; tx_out.set_segwit_if_any_witness();
                 continue;
             }
             // else: maybe P2SH-P2WSH
@@ -201,7 +201,7 @@ inline bool sign_and_finalize_psbt2_multi(const PSBT2& P, const std::vector<std:
                     for (auto& ki: infos){
                         bool match=false; if (is_p2pk){ match=(pk33==ki.pub33);} else if (is_p2pkh){ match=(std::memcmp(h160ws, ki.h160, 20)==0); }
                         if (!match) continue;
-                        uint8_t shh[32]; std::vector<uint8_t> sc=in.witness_script; bitcrypto::tx::bip143_sighash(tx_out, i, sc, amts[i], sighash_type, shh);
+                        uint8_t shh[32]; std::vector<uint8_t> sc=in.witness_script; bitcrypto::tx::sighash_segwit_v0_all(tx_out, i, sc, amts[i], shh);
                         bitcrypto::sign::ECDSA_Signature sig{}; if (!bitcrypto::sign::ecdsa_sign_rfc6979(ki.priv.data(), shh, sig)) return false;
                         std::vector<uint8_t> sigder; bitcrypto::tx::serialize_der_sig_with_hashbyte(sig, sighash_type, sigder);
                         tx_out.vin[i].witness.clear(); tx_out.vin[i].witness.push_back(sigder); if (is_p2pkh) tx_out.vin[i].witness.push_back(ki.pub33);
@@ -210,7 +210,7 @@ inline bool sign_and_finalize_psbt2_multi(const PSBT2& P, const std::vector<std:
                         tx_out.vin[i].scriptSig.clear(); tx_out.vin[i].scriptSig.push_back((uint8_t)rs.size()); tx_out.vin[i].scriptSig.insert(tx_out.vin[i].scriptSig.end(), rs.begin(), rs.end());
                         found=true; break;
                     }
-                    if (!found) return false; tx_out.segwit=true; tx_out.set_segwit_if_any_witness(); continue;
+                    if (!found) return false; tx_out.has_witness=true; tx_out.set_segwit_if_any_witness(); continue;
                 }
                 // Multisig P2SH-P2WSH
                 int mreq=0,n=0; std::vector<std::vector<uint8_t>> pubs;
@@ -219,7 +219,7 @@ inline bool sign_and_finalize_psbt2_multi(const PSBT2& P, const std::vector<std:
                 for (auto& pub : pubs){
                     for (auto& ki : infos){
                         if (pub==ki.pub33){
-                            uint8_t sh2[32]; std::vector<uint8_t> sc=in.witness_script; bitcrypto::tx::bip143_sighash(tx_out, i, sc, amts[i], sighash_type, sh2);
+                            uint8_t sh2[32]; std::vector<uint8_t> sc=in.witness_script; bitcrypto::tx::sighash_segwit_v0_all(tx_out, i, sc, amts[i], sh2);
                             bitcrypto::sign::ECDSA_Signature sig{}; if (!bitcrypto::sign::ecdsa_sign_rfc6979(ki.priv.data(), sh2, sig)) return false;
                             std::vector<uint8_t> sigder; bitcrypto::tx::serialize_der_sig_with_hashbyte(sig, sighash_type, sigder);
                             sigs.push_back(sigder); break;
@@ -232,10 +232,10 @@ inline bool sign_and_finalize_psbt2_multi(const PSBT2& P, const std::vector<std:
                 for (int k=0;k<mreq;k++) tx_out.vin[i].witness.push_back(sigs[k]);
                 tx_out.vin[i].witness.push_back(in.witness_script);
                 tx_out.vin[i].scriptSig.clear(); tx_out.vin[i].scriptSig.push_back((uint8_t)rs.size()); tx_out.vin[i].scriptSig.insert(tx_out.vin[i].scriptSig.end(), rs.begin(), rs.end());
-                tx_out.segwit=true; tx_out.set_segwit_if_any_witness(); continue;
+                tx_out.has_witness=true; tx_out.set_segwit_if_any_witness(); continue;
             }
         }
-        Legacy P2PKH via non_witness_utxo
+        // Legacy P2PKH via non_witness_utxo
             if (is_p2pkh(spk, h160)){
                 for (auto& ki: infos){ if (std::memcmp(ki.h160, h160, 20)==0){
                     if (!bitcrypto::tx::sign_input_p2pkh(tx_out, i, ki.priv.data(), ki.h160, sighash_type)) return false;

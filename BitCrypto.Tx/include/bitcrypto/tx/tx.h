@@ -32,6 +32,14 @@ struct Tx {
     std::vector<TxOut> vout;
     uint32_t locktime{0};
     bool has_witness{false}; // controle para serialização segwit/wtxid
+
+    // Marca como segwit se qualquer entrada possuir witness
+    inline void set_segwit_if_any_witness(){
+        has_witness = false;
+        for (const auto& in : vin){
+            if (!in.witness.empty()){ has_witness = true; break; }
+        }
+    }
 };
 
 // Alias legado para compatibilidade com código existente

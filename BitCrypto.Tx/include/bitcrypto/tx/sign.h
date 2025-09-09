@@ -33,11 +33,10 @@ inline bool sign_p2pkh(Transaction& tx, size_t index, const uint8_t priv32[32], 
     using namespace bitcrypto; using namespace bitcrypto::sign;
     uint8_t pub33[33], h160[20]; pubkey_hash160_from_priv(priv32, pub33, h160);
     std::vector<uint8_t> scriptCode = script_p2pkh(h160);
-    std::vector<uint8_t> pre; legacy_sighash_preimage(tx, index, scriptCode, hashType, pre);
-    uint8_t sighash[32]; bitcrypto::hash::sha256(pre.data(), pre.size(), sighash); bitcrypto::hash::sha256(sighash, 32, sighash);
+    uint8_t sighash[32]; sighash_legacy_all(tx, index, scriptCode, hashType, sighash);
     ECDSA_Signature sig; if (!ecdsa_sign(priv32, sighash, sig, true)) return false;
-    uint8_t der[80]; size_t derlen=0; bitcrypto::encoding::ecdsa_sig_to_der(sig, der, derlen);
-    std::vector<uint8_t> pushsig(der, der+derlen); pushsig.push_back((uint8_t)hashType);
+    std::vector<uint8_t> der; bitcrypto::encoding::ecdsa_der_encode(sig.r, sig.s, der);
+    std::vector<uint8_t> pushsig = der; pushsig.push_back((uint8_t)hashType);
     std::vector<uint8_t> scriptSig; push_data(pushsig, scriptSig); std::vector<uint8_t> pk(pub33, pub33+33); push_data(pk, scriptSig);
     tx.vin[index].scriptSig = scriptSig; tx.vin[index].witness.clear(); return true;
 }
@@ -47,24 +46,43 @@ inline bool sign_p2wpkh(Transaction& tx, size_t index, const uint8_t priv32[32],
     uint8_t pub33[33], h160[20]; pubkey_hash160_from_priv(priv32, pub33, h160);
     // scriptCode é o script P2PKH CANÔNICO (BIP143) com o hash160 do pubkey
     std::vector<uint8_t> scriptCode = script_p2pkh(h160);
-    uint8_t sighash[32]; bip143_sighash(tx, index, scriptCode, amount, hashType, sighash);
+    uint8_t sighash[32]; sighash_segwit_v0_all(tx, index, scriptCode, amount, sighash);
     ECDSA_Signature sig; if (!ecdsa_sign(priv32, sighash, sig, true)) return false;
-    uint8_t der[80]; size_t derlen=0; bitcrypto::encoding::ecdsa_sig_to_der(sig, der, derlen);
-    std::vector<uint8_t> w0(der, der+derlen); w0.push_back((uint8_t)hashType);
+    std::vector<uint8_t> w0; bitcrypto::encoding::ecdsa_der_encode(sig.r, sig.s, w0); w0.push_back((uint8_t)hashType);
     std::vector<uint8_t> w1(pub33, pub33+33);
     tx.vin[index].scriptSig.clear(); tx.vin[index].witness = { std::move(w0), std::move(w1) };
     return true;
 }
 
-inline bool sign_p2tr_keypath(Transaction& tx, size_t index, const uint8_t priv32[32], uint64_t amount, uint32_t hashType){
+
+inline void serialize_der_sig_with_hashbyte(const bitcrypto::sign::ECDSA_Signature& sig, uint32_t hashType, std::vector<uint8_t>& out){
+    bitcrypto::encoding::ecdsa_der_encode(sig.r, sig.s, out); out.push_back((uint8_t)hashType);
+}
+
+inline bool sign_input_p2wpkh(Transaction& tx, size_t index, const uint8_t priv32[32], const uint8_t h160[20], uint64_t amount, uint32_t hashType){
     using namespace bitcrypto; using namespace bitcrypto::sign;
-    uint8_t x32[32]; xonly_from_priv(priv32, x32);
-    uint8_t msg[32]; bip341_sighash_keypath(tx, index, amount, hashType & 0xff, msg);
-    uint8_t sig64[64]; if (!schnorr_sign_bip340(priv32, msg, nullptr, sig64)) return false;
-    std::vector<uint8_t> w0(sig64, sig64+64);
-    if ((hashType & 0xff) != 0x00) w0.push_back((uint8_t)(hashType & 0xff));
-    tx.vin[index].scriptSig.clear(); tx.vin[index].witness = { std::move(w0) };
+    std::vector<uint8_t> scriptCode = script_p2pkh(h160);
+    uint8_t sighash[32]; sighash_segwit_v0_all(tx, index, scriptCode, amount, sighash);
+    ECDSA_Signature sig; if (!ecdsa_sign(priv32, sighash, sig, true)) return false;
+    std::vector<uint8_t> w0; serialize_der_sig_with_hashbyte(sig, hashType, w0);
+    U256 d = U256::from_be32(priv32); Secp256k1::scalar_mod_n(d); auto P = Secp256k1::derive_pubkey(d);
+    uint8_t pub33[33]; size_t plen=0; encode_pubkey(P, true, pub33, plen);
+    std::vector<uint8_t> w1(pub33, pub33+33);
+    tx.vin[index].scriptSig.clear(); tx.vin[index].witness = { std::move(w0), std::move(w1) };
     return true;
+}
+
+inline bool sign_input_p2pkh(Transaction& tx, size_t index, const uint8_t priv32[32], const uint8_t h160[20], uint32_t hashType){
+    using namespace bitcrypto; using namespace bitcrypto::sign;
+    std::vector<uint8_t> scriptCode = script_p2pkh(h160);
+    uint8_t sighash[32]; sighash_legacy_all(tx, index, scriptCode, hashType, sighash);
+    ECDSA_Signature sig; if (!ecdsa_sign(priv32, sighash, sig, true)) return false;
+    std::vector<uint8_t> pushsig; bitcrypto::encoding::ecdsa_der_encode(sig.r, sig.s, pushsig); pushsig.push_back((uint8_t)hashType);
+    std::vector<uint8_t> scriptSig; push_data(pushsig, scriptSig);
+    U256 d = U256::from_be32(priv32); Secp256k1::scalar_mod_n(d); auto P = Secp256k1::derive_pubkey(d);
+    uint8_t pub33[33]; size_t plen=0; encode_pubkey(P, true, pub33, plen);
+    std::vector<uint8_t> pk(pub33, pub33+plen); push_data(pk, scriptSig);
+    tx.vin[index].scriptSig = scriptSig; tx.vin[index].witness.clear(); return true;
 }
 
 }} // ns

@@ -27,6 +27,8 @@ struct In {
     uint8_t prev_txid[32]; uint32_t vout=0; uint32_t sequence=0xFFFFFFFF;
     bool has_witness_utxo=false; bitcrypto::tx::TxOut witness_utxo;
     bool has_non_witness_utxo=false; bitcrypto::tx::Transaction non_witness_utxo;
+    bool has_redeem_script=false; std::vector<uint8_t> redeem_script;
+    bool has_witness_script=false; std::vector<uint8_t> witness_script;
     // partial signatures (pub, sig)
     std::vector<std::pair<std::vector<uint8_t>, std::vector<uint8_t>>> partial_sigs;
 
@@ -158,32 +160,7 @@ struct PSBT2 {
 
     static bool from_base64(const std::string& b64, PSBT2& out){ std::vector<uint8_t> raw; if (!bitcrypto::encoding::base64_decode(b64, raw)) return false; return parse(raw, out); }
 
-    // ---- Conversão para PSBT v0 (para reusar signer robusto e extrair TX com witnesses) ----
-    bool to_psbt_v0(bitcrypto::psbt::PSBT& p0) const {
-        p0.unsigned_tx.version = tx_version; p0.unsigned_tx.locktime=0; p0.unsigned_tx.vin.clear(); p0.unsigned_tx.vout.clear();
-        p0.inputs.clear(); p0.outputs.clear();
-        // vin/vout
-        for (const auto& i : ins){
-            bitcrypto::tx::TxIn in; std::memcpy(in.prevout.txid, i.prev_txid, 32); in.prevout.vout=i.vout; in.sequence=i.sequence;
-            p0.unsigned_tx.vin.push_back(in);
-        }
-        for (const auto& o : outs){
-            bitcrypto::tx::TxOut to; to.value=o.amount; to.scriptPubKey=o.script; p0.unsigned_tx.vout.push_back(to);
-        }
-        // maps
-        p0.inputs.resize(ins.size()); p0.outputs.resize(outs.size());
-        for (size_t i=0;i<ins.size(); ++i){
-            if (ins[i].has_witness_utxo){
-                p0.inputs[i].has_witness_utxo=true; p0.inputs[i].witness_utxo=ins[i].witness_utxo; p0.inputs[i].sighash_type=bitcrypto::tx::SIGHASH_ALL;
-            } else if (ins[i].has_non_witness_utxo){
-                p0.inputs[i].has_non_witness_utxo=true; p0.inputs[i].sighash_type=bitcrypto::tx::SIGHASH_ALL;
-            } else {
-                // não suportado
-                return false;
-            }
-        }
-        return true;
-    }
+    // Conversão para PSBT v0 removida nesta revisão
 };
 
 }} // ns

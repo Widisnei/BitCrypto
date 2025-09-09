@@ -60,6 +60,11 @@ inline bool ecdsa_sign(const uint8_t priv32[32], const uint8_t hash32[32], ECDSA
     return !is_zero32(sig.s);
 }
 
+// Alias de compatibilidade com a nomenclatura anterior
+inline bool ecdsa_sign_rfc6979(const uint8_t priv32[32], const uint8_t hash32[32], ECDSA_Signature& sig){
+    return ecdsa_sign(priv32, hash32, sig, true);
+}
+
 inline bool ecdsa_verify(const uint8_t pubkey[], size_t publen, const uint8_t hash32[32], const ECDSA_Signature& sig, bool require_low_s=true){
     using namespace bitcrypto;
     if (!(publen==33 || publen==65)) return false;
@@ -140,18 +145,4 @@ inline bool schnorr_verify_bip340(const uint8_t pubx32[32], const uint8_t msg32[
 }
 
 // Aliases de compatibilidade com versões anteriores ------------------------
-inline bool schnorr_sign(const uint8_t priv32[32], const uint8_t msg32[32], uint8_t out64[64], const uint8_t aux_rand32[32]=nullptr){
-    // Encaminha para a rotina BIP-340 padrão
-    return schnorr_sign_bip340(priv32, msg32, out64, aux_rand32);
-}
-
-inline bool schnorr_verify(const uint8_t pubkey[], size_t publen, const uint8_t msg32[32], const uint8_t sig64[64]){
-    // Aceita chave pública comprimida ou não e verifica via BIP-340
-    if (publen==33 && (pubkey[0]==0x02 || pubkey[0]==0x03)){
-        return schnorr_verify_bip340(pubkey+1, msg32, sig64);
-    } else if (publen==65 && pubkey[0]==0x04){
-        return schnorr_verify_bip340(pubkey+1, msg32, sig64);
-    }
-    return false;
-}
 }}

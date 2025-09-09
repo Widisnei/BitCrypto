@@ -12,6 +12,7 @@
 #include <bitcrypto/encoding/base58.h>
 #include <bitcrypto/encoding/segwit.h>
 #include <bitcrypto/encoding/taproot.h>
+#include <bitcrypto/tx/script.h>
 #include <bitcrypto/psbt2/psbt_v2.h>
 #include <bitcrypto/psbt2/psbt_v2_sign.h>
 
@@ -295,11 +296,11 @@ int main(){
         uint8_t d[32]={0}; d[31]=1;
         auto P = Secp256k1::derive_pubkey(U256::from_be32(d)); uint8_t pub[65]; size_t plen=0; encode_pubkey(P,true,pub,plen);
         uint8_t h160[20]; bitcrypto::hash::hash160(pub, plen, h160);
-        bitcrypto::tx::Script spk = bitcrypto::tx::Script::p2wpkh(h160);
+        auto spk = bitcrypto::tx::script_p2wpkh(h160);
         // psbt2 create
         bitcrypto::psbt2::PSBT2 P2; P2.tx_version=2;
-        bitcrypto::psbt2::In I; std::memset(I.prev_txid, 0x22, 32); I.vout=0; I.sequence=0xFFFFFFFF; I.has_witness_utxo=true; I.witness_utxo.value=50000; I.witness_utxo.scriptPubKey=spk.serialize(); P2.ins.push_back(I);
-        bitcrypto::psbt2::Out O; O.amount=40000; O.script=spk.serialize(); P2.outs.push_back(O);
+        bitcrypto::psbt2::In I; std::memset(I.prev_txid, 0x22, 32); I.vout=0; I.sequence=0xFFFFFFFF; I.has_witness_utxo=true; I.witness_utxo.value=50000; I.witness_utxo.scriptPubKey=spk; P2.ins.push_back(I);
+        bitcrypto::psbt2::Out O; O.amount=40000; O.script=spk; P2.outs.push_back(O);
         auto b64=P2.to_base64();
         bitcrypto::psbt2::PSBT2 P2p; if(!bitcrypto::psbt2::PSBT2::from_base64(b64, P2p)){ std::cerr<<"PSBTv2 parse falhou\n"; return 1; }
         bitcrypto::psbt::PSBT P0; if(!P2p.to_psbt_v0(P0)){ std::cerr<<"to_psbt_v0 falhou\n"; return 1; }

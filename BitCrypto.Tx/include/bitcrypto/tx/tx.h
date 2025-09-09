@@ -34,6 +34,9 @@ struct Tx {
     bool has_witness{false}; // controle para serialização segwit/wtxid
 };
 
+// Alias legado para compatibilidade com código existente
+using Transaction = Tx;
+
 inline void serialize_legacy(const Tx& tx, std::vector<uint8_t>& out){
     write_u32(out, tx.version);
     write_varint(out, tx.vin.size());

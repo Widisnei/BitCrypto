@@ -42,7 +42,7 @@ if(BITCRYPTO_ENABLE_LTO)
   endif()
 endif()
 
-enable_testing()
+include(CTest) # habilita alvos de teste e opção BUILD_TESTING
 
 add_library(bitcrypto_common INTERFACE)
 target_compile_definitions(bitcrypto_common INTERFACE

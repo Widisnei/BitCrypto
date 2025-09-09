@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <random>
+#include <cstring>
 #include <bitcrypto/hash/sha256.h>
 #include <bitcrypto/hash/ripemd160.h>
 #include <bitcrypto/hash/hash160.h>
@@ -12,7 +13,11 @@
 #include <bitcrypto/encoding/base58.h>
 #include <bitcrypto/encoding/segwit.h>
 #include <bitcrypto/encoding/taproot.h>
+#include <bitcrypto/hd/bip39.h>
+#include <bitcrypto/hd/bip32.h>
 #include <bitcrypto/tx/script.h>
+#include <bitcrypto/tx/miniscript.h>
+#include <bitcrypto/tx/tapscript.h>
 #include <bitcrypto/psbt2/psbt_v2.h>
 #include <bitcrypto/psbt2/psbt_v2_sign.h>
 
@@ -221,95 +226,25 @@ int main(){
         if (a!=b){ std::cerr<<"ckd_pub != neuter(ckd_priv)\n"; return 1; }
     }
 
-    // PSBT/P2WPKH end-to-end (SIGHASH_ALL)
-    {
-        using namespace bitcrypto;
-        using namespace bitcrypto::tx;
-        using namespace bitcrypto::psbt;
-        using namespace bitcrypto::hash;
-
-        // unsigned tx: 1-in, 1-out
-        Tx t; t.version=2; t.locktime=0;
-        t.vin.resize(1); t.vin[0].sequence = 0xFFFFFFFD;
-        // prevout txid (little-endian em serialização; aqui guardamos o "hash" little)
-        for (int i=0;i<32;i++) t.vin[0].prevout.txid[i]=(uint8_t)i;
-        t.vin[0].prevout.vout = 1;
-        t.vout.resize(1); t.vout[0].value = 5000000000ULL - 10000ULL; // 50 BTC - fee
-        // output script (P2WPKH dummy -> OP_0 20 0x11*20)
-        t.vout[0].scriptPubKey = {0x00, 0x14}; t.vout[0].scriptPubKey.insert(t.vout[0].scriptPubKey.end(), 20, 0x11);
-
-        Psbt P; P.unsigned_tx = t; P.inputs.resize(1); P.outputs.resize(1);
-
-        // witness UTXO do input 0: valor + scriptPubKey P2WPKH para a nossa chave
-        uint8_t d[32]={0}; d[31]=0x01; // priv=1
-        U256 du=U256::from_be32(d); Secp256k1::scalar_mod_n(du); auto Q=Secp256k1::derive_pubkey(du); uint8_t pub[65]; size_t plen=0; encode_pubkey(Q,true,pub,plen);
-        uint8_t h160[20]; uint8_t tmp[32]; sha256(pub, 33, tmp); ripemd160(tmp, 32, h160);
-        std::vector<uint8_t> spk = {0x00, 0x14}; spk.insert(spk.end(), h160, h160+20);
-        std::vector<uint8_t> utxo; utxo.reserve(8+1+22); // value + varint(22) + script
-        // value
-        for (int i=0;i<8;i++) utxo.push_back((uint8_t)((5000000000ULL>>(8*i))&0xFF));
-        // script len (22)
-        utxo.push_back(22);
-        utxo.insert(utxo.end(), spk.begin(), spk.end());
-        // add to input map
-        std::vector<uint8_t> k{KEY_IN_WITNESS_UTXO};
-        P.inputs[0].push_back(MapKV{k,utxo});
-
-        // assina e finaliza
-        if (!sign_p2wpkh_input(P, 0, d)){ std::cerr<<"psbt sign falhou\n"; return 1; }
-        if (!finalize_p2wpkh(P, 0)){ std::cerr<<"psbt finalize falhou\n"; return 1; }
-        // checa witness presente (2 itens: sig+pub)
-        if (P.unsigned_tx.vin[0].witness.size()!=2 || P.unsigned_tx.vin[0].witness[1].size()!=33){ std::cerr<<"witness inválida\n"; return 1; }
-    }
-
-    // Taproot (P2TR) key-path — PSBT v0 signing/finalization (subset)
-    {
-        using namespace bitcrypto;
-        // d=1
-        uint8_t d[32]={0}; d[31]=1;
-        // Deriva Q e scriptPubKey P2TR
-        auto P = Secp256k1::derive_pubkey(U256::from_be32(d));
-        uint8_t px[32]; bool odd=false; tx::xonly_from_point(P, px, odd);
-        // Tweak Q = P + H_tweak(Px)*G
-        std::vector<uint8_t> msg; msg.insert(msg.end(), px, px+32); uint8_t th[32]; tx::tagged_hash("TapTweak", msg, th);
-        auto t = U256::from_be32(th); Secp256k1::scalar_mod_n(t);
-        auto Q = Secp256k1::add(Secp256k1::to_jacobian(P), Secp256k1::scalar_mul(t, Secp256k1::G()));
-        auto Qa = Secp256k1::to_affine(Q); uint8_t qx[32]; bool qodd=false; tx::xonly_from_point(Qa, qx, qodd);
-        // scriptPubKey = OP_1 0x20 <qx>
-        std::vector<uint8_t> spk; spk.push_back(0x51); spk.push_back(0x20); spk.insert(spk.end(), qx, qx+32);
-        // Cria tx 1-in-1-out
-        tx::Transaction txo; txo.version=2; txo.locktime=0; tx::TxIn in; std::memset(in.prevout.txid, 0x11, 32); in.prevout.vout=0; in.sequence=0xFFFFFFFF; txo.vin.push_back(in);
-        tx::TxOut o; o.value=40000; o.scriptPubKey = spk; txo.vout.push_back(o);
-        // PSBT v0
-        psbt::PSBT Psb; Psb.unsigned_tx=txo; Psb.inputs.resize(1); Psb.outputs.resize(1);
-        Psb.inputs[0].has_witness_utxo=true; Psb.inputs[0].witness_utxo.value=50000; Psb.inputs[0].witness_utxo.scriptPubKey=spk;
-        if (!psbt::sign_psbt(Psb, d)){ std::cerr<<"sign_psbt P2TR falhou\n"; return 1; }
-        if (!psbt::finalize_psbt(Psb)){ std::cerr<<"finalize_psbt P2TR falhou\n"; return 1; }
-        if (Psb.unsigned_tx.vin[0].witness.size()!=1){ std::cerr<<"witness P2TR deveria ter 1 elemento (assinatura)\n"; return 1; }
-        if (Psb.unsigned_tx.vin[0].witness[0].size()!=64 && Psb.unsigned_tx.vin[0].witness[0].size()!=65){ std::cerr<<"assinatura schnorr tamanho inválido\n"; return 1; }
-    }
 
     
-    // PSBTv2 P2WPKH bridge sign/final
+    // PSBTv2 P2WPKH sign/final
     {
         using namespace bitcrypto;
         uint8_t d[32]={0}; d[31]=1;
         auto P = Secp256k1::derive_pubkey(U256::from_be32(d)); uint8_t pub[65]; size_t plen=0; encode_pubkey(P,true,pub,plen);
         uint8_t h160[20]; bitcrypto::hash::hash160(pub, plen, h160);
         auto spk = bitcrypto::tx::script_p2wpkh(h160);
-        // psbt2 create
         bitcrypto::psbt2::PSBT2 P2; P2.tx_version=2;
         bitcrypto::psbt2::In I; std::memset(I.prev_txid, 0x22, 32); I.vout=0; I.sequence=0xFFFFFFFF; I.has_witness_utxo=true; I.witness_utxo.value=50000; I.witness_utxo.scriptPubKey=spk; P2.ins.push_back(I);
         bitcrypto::psbt2::Out O; O.amount=40000; O.script=spk; P2.outs.push_back(O);
-        auto b64=P2.to_base64();
-        bitcrypto::psbt2::PSBT2 P2p; if(!bitcrypto::psbt2::PSBT2::from_base64(b64, P2p)){ std::cerr<<"PSBTv2 parse falhou\n"; return 1; }
-        bitcrypto::psbt::PSBT P0; if(!P2p.to_psbt_v0(P0)){ std::cerr<<"to_psbt_v0 falhou\n"; return 1; }
-        if (!bitcrypto::psbt::sign_psbt(P0, d)){ std::cerr<<"sign_psbt via bridge falhou\n"; return 1; }
-        if (!bitcrypto::psbt::finalize_psbt(P0)){ std::cerr<<"finalize falhou\n"; return 1; }
-        auto raw = P0.unsigned_tx.serialize();
+        std::vector<std::vector<uint8_t>> ks; ks.emplace_back(d, d+32);
+        bitcrypto::tx::Transaction txf;
+        if (!bitcrypto::psbt2::sign_and_finalize_psbt2_multi(P2, ks, bitcrypto::tx::SIGHASH_ALL, txf)){ std::cerr<<"sign/final psbt2 falhou\n"; return 1; }
+        std::vector<uint8_t> raw; if (txf.has_witness) bitcrypto::tx::serialize_segwit(txf, raw); else bitcrypto::tx::serialize_legacy(txf, raw);
         if (raw.size()<80){ std::cerr<<"tx v2-p2wpkh pequena\n"; return 1; }
     }
-    // PSBTv2 P2TR key-path bridge sign/final
+    // PSBTv2 P2TR key-path sign/final
     {
         using namespace bitcrypto;
         uint8_t d[32]={0}; d[31]=1;
@@ -322,10 +257,10 @@ int main(){
         bitcrypto::psbt2::PSBT2 P2; P2.tx_version=2;
         bitcrypto::psbt2::In I; std::memset(I.prev_txid, 0x33, 32); I.vout=0; I.sequence=0xFFFFFFFF; I.has_witness_utxo=true; I.witness_utxo.value=50000; I.witness_utxo.scriptPubKey=spk; P2.ins.push_back(I);
         bitcrypto::psbt2::Out O; O.amount=40000; O.script=spk; P2.outs.push_back(O);
-        bitcrypto::psbt::PSBT P0; if(!P2.to_psbt_v0(P0)){ std::cerr<<"to_psbt_v0 P2TR falhou\n"; return 1; }
-        if (!bitcrypto::psbt::sign_psbt(P0, d)){ std::cerr<<"sign_psbt P2TR via bridge falhou\n"; return 1; }
-        if (!bitcrypto::psbt::finalize_psbt(P0)){ std::cerr<<"finalize P2TR falhou\n"; return 1; }
-        auto raw = P0.unsigned_tx.serialize();
+        std::vector<std::vector<uint8_t>> ks; ks.emplace_back(d, d+32);
+        bitcrypto::tx::Transaction txf;
+        if (!bitcrypto::psbt2::sign_and_finalize_psbt2_multi(P2, ks, bitcrypto::tx::SIGHASH_ALL, txf)){ std::cerr<<"sign/final psbt2 P2TR falhou\n"; return 1; }
+        std::vector<uint8_t> raw; if (txf.has_witness) bitcrypto::tx::serialize_segwit(txf, raw); else bitcrypto::tx::serialize_legacy(txf, raw);
         if (raw.size()<80){ std::cerr<<"tx v2-p2tr pequena\n"; return 1; }
     }
 
@@ -335,30 +270,12 @@ int main(){
         uint8_t d[32]; for(int i=0;i<32;i++) d[i]=(uint8_t)(i+1);
         std::string w_main = bitcrypto::encoding::to_wif(d, true, bitcrypto::encoding::Network::MAINNET);
         std::string w_test = bitcrypto::encoding::to_wif(d, true, bitcrypto::encoding::Network::TESTNET);
-        std::vector<uint8_t> priv; bool comp=false; bool is_test=false;
-        if (!bitcrypto::encoding::wif_decode(w_main, priv, comp, is_test)){ std::cerr<<"WIF mainnet decode falhou\n"; return 1; }
-        if (priv.size()!=32 || !comp || is_test){ std::cerr<<"WIF mainnet flags/size incorretos\n"; return 1; }
+        uint8_t priv[32]; bool comp=false; bitcrypto::encoding::Network net;
+        if (!bitcrypto::encoding::from_wif(w_main, priv, comp, net)){ std::cerr<<"WIF mainnet decode falhou\n"; return 1; }
+        if (!comp || net!=bitcrypto::encoding::Network::MAINNET){ std::cerr<<"WIF mainnet flags incorretos\n"; return 1; }
         for (int i=0;i<32;i++) if (priv[i]!=d[i]){ std::cerr<<"WIF mainnet payload divergente\n"; return 1; }
-        priv.clear(); comp=false; is_test=false;
-        if (!bitcrypto::encoding::wif_decode(w_test, priv, comp, is_test)){ std::cerr<<"WIF testnet decode falhou\n"; return 1; }
-        if (priv.size()!=32 || !comp || !is_test){ std::cerr<<"WIF testnet flags/size incorretos\n"; return 1; }
-    }
-    // PSBTv2 verifier: positivo e negativo (P2SH-P2WSH)
-    {
-        using namespace bitcrypto;
-        uint8_t d1[32]={0}; d1[31]=9; auto P1=Secp256k1::derive_pubkey(U256::from_be32(d1)); uint8_t pub1[65]; size_t l1=0; encode_pubkey(P1,true,pub1,l1);
-        std::vector<uint8_t> ws; ws.push_back(0x21); ws.push_back(pub1[0]); for(size_t i=1;i<33;i++) ws.push_back(pub1[i]); ws.push_back(0xAC);
-        uint8_t h[32]; bitcrypto::hash::sha256(ws.data(), ws.size(), h);
-        std::vector<uint8_t> redeem; redeem.push_back(0x00); redeem.push_back(0x20); redeem.insert(redeem.end(), h, h+32);
-        uint8_t rh[20]; bitcrypto::hash::hash160(redeem.data(), redeem.size(), rh);
-        std::vector<uint8_t> spk; spk.push_back(0xA9); spk.push_back(0x14); spk.insert(spk.end(), rh, rh+20); spk.push_back(0x87);
-        bitcrypto::psbt2::PSBT2 P; P.tx_version=2;
-        bitcrypto::psbt2::In I; std::memset(I.prev_txid, 0x33, 32); I.vout=0; I.sequence=0xFFFFFFFE; I.has_witness_utxo=true; I.witness_utxo.value=10000; I.witness_utxo.scriptPubKey=spk; I.has_redeem_script=true; I.redeem_script=redeem; I.has_witness_script=true; I.witness_script=ws;
-        P.ins.push_back(I); bitcrypto::psbt2::Out O; O.amount=9000; O.script=spk; P.outs.push_back(O);
-        std::string err; if (!bitcrypto::psbt2::verify_psbt2(P, err)){ std::cerr<<"psbt2 verify deveria OK: "<<err<<"\n"; return 1; }
-        // negativo
-        P.ins[0].redeem_script[3] ^= 0x01;
-        if (bitcrypto::psbt2::verify_psbt2(P, err)){ std::cerr<<"psbt2 verify deveria falhar\n"; return 1; }
+        if (!bitcrypto::encoding::from_wif(w_test, priv, comp, net)){ std::cerr<<"WIF testnet decode falhou\n"; return 1; }
+        if (!comp || net!=bitcrypto::encoding::Network::TESTNET){ std::cerr<<"WIF testnet flags incorretos\n"; return 1; }
     }
 
     

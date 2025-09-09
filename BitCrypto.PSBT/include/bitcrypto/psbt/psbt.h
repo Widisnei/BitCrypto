@@ -6,7 +6,7 @@
 #include <cstring>
 #include <bitcrypto/hash/sha256.h>
 #include <bitcrypto/hash/hash160.h>
-#include <bitcrypto/sign/ecdsa.h>
+#include <bitcrypto/sign/sign.h>
 #include <bitcrypto/encoding/base58.h>
 #include <bitcrypto/encoding/b58check.h>
 #include <bitcrypto/tx/tx.h>
@@ -25,6 +25,9 @@ struct Psbt {
     std::vector<std::vector<MapKV>> inputs;  // mapas por input
     std::vector<std::vector<MapKV>> outputs; // mapas por output
 };
+
+// Alias para compatibilidade com código legado
+using PSBT = Psbt;
 
 // Helpers varint
 inline void write_varint(std::vector<uint8_t>& out, uint64_t v){

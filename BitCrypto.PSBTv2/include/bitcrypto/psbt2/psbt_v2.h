@@ -14,6 +14,15 @@ namespace bitcrypto { namespace psbt2 {
 using bitcrypto::psbt::write_varint;
 using bitcrypto::psbt::read_varint;
 
+// Leitura de varint a partir de ponteiro cru
+inline bool read_varint(const uint8_t* in, size_t len, size_t& p, uint64_t& v){
+    if (p>=len) return false; uint8_t ch=in[p++];
+    if (ch<0xFD){ v=ch; return true; }
+    if (ch==0xFD){ if (p+2>len) return false; v = (uint64_t)in[p] | ((uint64_t)in[p+1]<<8); p+=2; return true; }
+    if (ch==0xFE){ if (p+4>len) return false; v=0; for(int i=0;i<4;i++) v|=(uint64_t)in[p+i]<<(8*i); p+=4; return true; }
+    if (p+8>len) return false; v=0; for(int i=0;i<8;i++) v|=(uint64_t)in[p+i]<<(8*i); p+=8; return true;
+}
+
 struct In {
     uint8_t prev_txid[32]; uint32_t vout=0; uint32_t sequence=0xFFFFFFFF;
     bool has_witness_utxo=false; bitcrypto::tx::TxOut witness_utxo;

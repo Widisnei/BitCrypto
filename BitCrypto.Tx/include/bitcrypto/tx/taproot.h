@@ -7,6 +7,7 @@
 #include <bitcrypto/ec_secp256k1.h>
 #include <bitcrypto/sign/schnorr.h>
 #include "tx.h"
+#include <bitcrypto/field_n.h>
 
 // Implementação Taproot (BIP340/341):
 // - tagged_hash(tag, msg) = SHA256(SHA256(tag)||SHA256(tag)||msg)
@@ -60,7 +61,10 @@ inline bool taproot_tweak_seckey(const uint8_t seckey32[32], const uint8_t* merk
     U256 d = U256::from_be32(seckey32); Secp256k1::scalar_mod_n(d); if (d.is_zero()) return false;
     auto P = Secp256k1::derive_pubkey(d);
     // garante Y par ajustando d se necessário
-    U256 yu = P.Y.to_u256_nm(); if (yu.v[0] & 1ULL){ d = U256::sub(bitcrypto::Secp256k1::n(), d); P = Secp256k1::neg(P); }
+    U256 yu = P.Y.to_u256_nm(); if (yu.v[0] & 1ULL){
+        const U256 N{{bitcrypto::Fn::N[0],bitcrypto::Fn::N[1],bitcrypto::Fn::N[2],bitcrypto::Fn::N[3]}};
+        d = U256::sub(N, d); P = Secp256k1::neg(P);
+    }
     // xonly(P)
     uint8_t px[32]; bool _odd=false; xonly_from_point(P, px, _odd);
     // tagged_hash("TapTweak", px || merkle)
@@ -76,7 +80,10 @@ inline bool taproot_tweak_seckey(const uint8_t seckey32[32], const uint8_t* merk
     auto Q = Secp256k1::add(Secp256k1::to_jacobian(P), Secp256k1::scalar_mul(t, Secp256k1::G()));
     auto Qa = Secp256k1::to_affine(Q);
     // força Y(Q) par ajustando sk'
-    U256 yuQ = Qa.Y.to_u256_nm(); if (yuQ.v[0] & 1ULL){ skp = U256::sub(Secp256k1::n(), skp); }
+    U256 yuQ = Qa.Y.to_u256_nm(); if (yuQ.v[0] & 1ULL){
+        const U256 N{{bitcrypto::Fn::N[0],bitcrypto::Fn::N[1],bitcrypto::Fn::N[2],bitcrypto::Fn::N[3]}};
+        skp = U256::sub(N, skp);
+    }
     skp.to_be32(out32);
     return true;
 }
@@ -195,7 +202,7 @@ inline bool sign_input_p2tr_keypath(Transaction& tx, size_t in_idx, const uint8_
     // witness = [sig]
     tx.vin[in_idx].witness.clear();
     tx.vin[in_idx].witness.push_back(sig);
-    tx.segwit = true; tx.set_segwit_if_any_witness();
+    tx.has_witness = true;
     return true;
 }
 

@@ -60,7 +60,7 @@ int main(int argc, char** argv){
         std::vector<std::string> wl; std::string line; while (std::getline(wf,line)){ if(!line.empty()) wl.push_back(line); }
         if (wl.size()!=2048){ std::cerr<<"Wordlist inválida\n"; return 1; }
         if (!(strength==128||strength==160||strength==192||strength==224||strength==256)){ std::cerr<<"--strength inválido\n"; return 1; }
-        std::vector<uint8_t> ent(strength/8); if (!bitcrypto::kdf::os_random(ent.data(), ent.size())){ std::cerr<<"RNG falhou\n"; return 1; }
+        std::vector<uint8_t> ent(strength/8); if (!bitcrypto::rng::random_bytes(ent.data(), ent.size())){ std::cerr<<"RNG falhou\n"; return 1; }
         std::string phrase; if(!mnemonic_generate(ent.data(), ent.size(), wl, phrase)){ std::cerr<<"mnemonic_generate falhou\n"; return 1; }
         std::cout<<phrase<<"\n"; return 0;
     }

@@ -158,6 +158,6 @@ int main(int argc, char** argv){
             fclose(f); std::cout<<"Markdown salvo em "<<out_md<<"\n";
         } else std::cerr<<"Falha ao abrir MD: "<<out_md<<"\n";
     }
-    bitcrypto::secure_memzero(privs.data(), privs.size());
+    secure_memzero(privs.data(), privs.size());
     return 0;
 }

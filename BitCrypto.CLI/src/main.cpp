@@ -9,16 +9,13 @@
 #include <bitcrypto/ec_secp256k1.h>
 #include <bitcrypto/field_n.h>
 #include <bitcrypto/hash/sha256.h>
-#include <bitcrypto/hash/hmac_sha256.h>
 #include <bitcrypto/hash/sha512.h>
 #include <bitcrypto/hash/hmac_sha512.h>
 #include <bitcrypto/hash/hash160.h>
 #include <bitcrypto/encoding/base58.h>
 #include <bitcrypto/encoding/b58check.h>
 #include <bitcrypto/encoding/taproot.h>
-#include <bitcrypto/sign/der.h>
-#include <bitcrypto/sign/ecdsa.h>
-#include <bitcrypto/sign/schnorr.h>
+#include <bitcrypto/sign/sign.h>
 #include <bitcrypto/rng/rng.h>
 #include <bitcrypto/kdf/pbkdf2_hmac_sha512.h>
 #include <bitcrypto/hd/bip32.h>
@@ -132,16 +129,14 @@ int main(int argc, char** argv){
             if (priv_hex.size()!=64){ std::cerr<<"--priv <hex32> é obrigatório\n"; return 1; }
             auto d=to_bytes(priv_hex); uint8_t aux[32]; bool use_aux=false;
             if (!aux_hex.empty()){ auto a=to_bytes(aux_hex); if (a.size()!=32){ std::cerr<<"--aux inválido\n"; return 1; } std::memcpy(aux,a.data(),32); use_aux=true; }
-            bitcrypto::sign::SchnorrSig ss{};
-            if (!bitcrypto::sign::schnorr_sign_bip340(d.data(), m.data(), ss, use_aux?aux:nullptr)){ std::cerr<<"Falha Schnorr\n"; return 1; }
-            uint8_t out[64]; std::memcpy(out, ss.r32, 32); std::memcpy(out+32, ss.s32, 32);
-            std::cout<<bytes_to_hex(out, 64)<<"\n"; return 0;
+            uint8_t sig64[64];
+            if (!bitcrypto::sign::schnorr_sign_bip340(d.data(), m.data(), sig64, use_aux?aux:nullptr)){ std::cerr<<"Falha Schnorr\n"; return 1; }
+            std::cout<<bytes_to_hex(sig64, 64)<<"\n"; return 0;
         }
         if (verify_schnorr){
             if (xonly_hex.size()!=64 || sig_hex.size()!=128){ std::cerr<<"--xonly <hex32> e --sig <hex64>\n"; return 1; }
             auto X=to_bytes(xonly_hex); auto S=to_bytes(sig_hex);
-            bitcrypto::sign::SchnorrSig sg; std::memcpy(sg.r32,S.data(),32); std::memcpy(sg.s32,S.data()+32,32);
-            bool ok = bitcrypto::sign::schnorr_verify_bip340(X.data(), m.data(), sg);
+            bool ok = bitcrypto::sign::schnorr_verify_bip340(X.data(), m.data(), S.data());
             std::cout<<(ok?"OK":"FAIL")<<"\n"; return ok?0:1;
         }
     }
@@ -152,7 +147,7 @@ int main(int argc, char** argv){
             std::cerr<<"--strength inválido\n"; return 1;
         }
         std::vector<uint8_t> ent(strength_bits/8);
-        if (!bitcrypto::kdf::os_random(ent.data(), ent.size())){ std::cerr<<"Falha RNG (CNG)\n"; return 1; }
+        if (!bitcrypto::rng::random_bytes(ent.data(), ent.size())){ std::cerr<<"Falha RNG (CNG)\n"; return 1; }
         // Carrega wordlist dev
         std::ifstream wf("resources/bip39/english.txt"); if (!wf){ std::cerr<<"resources/bip39/english.txt não encontrado\n"; return 1; }
         std::vector<std::string> lines; std::string line; while (std::getline(wf,line)) if(!line.empty()) lines.push_back(line);
@@ -162,7 +157,7 @@ int main(int argc, char** argv){
     }
     if (want_seed){
         if (mnemonic.empty()){ std::cerr<<"--mnemonic-phrase requerido\n"; return 1; }
-        uint8_t seed[64]; bitcrypto::hd::mnemonic_to_seed(mnemonic, passphrase, seed);
+        uint8_t seed[64]; bitcrypto::hd::bip39_seed_from_mnemonic(mnemonic, passphrase, seed);
         std::cout<<bytes_to_hex(seed, 64)<<"\n"; return 0;
     }
     if (want_xprv){

@@ -30,3 +30,4 @@ inline bool ecdsa_der_decode(const uint8_t* sig, size_t len, uint8_t r32[32], ui
     if (len<8 || sig[0]!=0x30) return false; size_t l_off=0; size_t L=der_read_len(sig+1, len-1, l_off); if (L==(size_t)-1 || 1+l_off+L!=len) return false;
     size_t pos=1+l_off, used=0; if (!der_parse_int(sig+pos, len-pos, used, r32)) return false; pos+=used; if (!der_parse_int(sig+pos, len-pos, used, s32)) return false; pos+=used; if (pos!=len) return false; return true;
 }}
+

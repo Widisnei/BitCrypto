@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 
-namespace bitcrypto { namespace hash { namespace sha256 {
+namespace bitcrypto { namespace hash {
 
 struct SHA256 {
     uint32_t h[8];
@@ -116,4 +116,13 @@ struct SHA256 {
     }
 };
 
-}}} // ns
+using SHA256Ctx = SHA256;
+inline void sha256_init(SHA256Ctx& c){ c.init(); }
+inline void sha256_update(SHA256Ctx& c, const uint8_t* d, size_t n){ c.update(d, n); }
+inline void sha256_final(SHA256Ctx& c, uint8_t out[32]){ c.finalize(out); }
+inline void sha256(const uint8_t* d, size_t n, uint8_t out[32]){
+    SHA256Ctx c; c.init(); if (n) c.update(d, n); c.finalize(out);
+}
+
+}} // namespace hash
+} // namespace bitcrypto

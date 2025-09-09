@@ -2,7 +2,7 @@ SHA256                           SIZE(bytes)  PATH
 b97892534d6d1be7dc9a95bedb1ad1936b6b8ce237a73b7cdf8f255d39e59436        1774  BitCrypto/CMakePresets.json
 495e48104e312d8daa083a207ab5fe250d6900747257ac9cbe6122496e1a64bc        3870  BitCrypto/CMakeLists.txt
 fd23c05f97f86b5f182d80ca6ac3e4a6bf65b802c66db81c59f28d6a0f739c21        1788  BitCrypto/CONTRIBUTING.md
-9efe4f9d8b56c9193cd5aa8cc56c27ffba04e64a8ef56f0d3eeb3cd21bc79f1b        8146  BitCrypto/README.md
+7f8b8bf4baaef1a38f6ca961864680133e24789d841e2e6f9bee61dc04be3a3c        8245  BitCrypto/README.md
 9141e2a38f0a3916407be431dc77e2b6c1e51f822845a80d0bbb3e619dff5d2a        1022  BitCrypto/LICENSE
 50448f39b6e78ad9e3d74879e01eece5858db27469e398113cd9aa9310a4623e         901  BitCrypto/CHANGELOG.md
 d73e6fece915108b2f739d20616559bc1cf20bb8b1040e5e555bc6b4dd502a7d        1005  BitCrypto/ROADMAP.md
@@ -35,6 +35,7 @@ d0c91641d3609926b9197e6cda79931238b4b423d8600ad30c83c5fbb9c8c491         762  Bi
 0f9d507e40c06331e4c29b0a8fda8a9055987852188c645d4b7a8bbb73acf58e       11583  BitCrypto/BitCrypto.CLI/src/main.cpp
 b0173e46fd6450b02276169326e923d83a3edcfb93e3f6b3c3a43aed18c9ded5         293  BitCrypto/BitCrypto.Core/CMakeLists.txt
 0723886499c02d844061edf6708eecbeaa635e2e07407a374394e4eb7b9bf8f9        4853  BitCrypto/BitCrypto.Core/include/bitcrypto/msm_pippenger.h
+04c3e18481a09018bc81e75bef40e00c20e7efa2032e159eddccdc5194ca9441        3658  BitCrypto/BitCrypto.Core/include/bitcrypto/endo_shamir.h
 e5cce22327b8a5278515e456acecf7357a559d2ee68037d0877a99e6032aa58c        3860  BitCrypto/BitCrypto.Core/include/bitcrypto/field_secp256k1.h
 c3cbf279c53c2d97a7423b27fd9a0a7366af1122f0423c9ec43b5822a30fd3a4        1317  BitCrypto/BitCrypto.Core/include/bitcrypto/ec_parse.h
 53e79796c53a319b9f9631a165ed29cd6738d430847a9092261142fa02b17e08        4616  BitCrypto/BitCrypto.Core/include/bitcrypto/field_n.h
@@ -48,8 +49,9 @@ ce5c32b02d859b7632b868205cc9590cfdcf0563fdf2e333a6035e32ffa0d746        1432  Bi
 ffb5a15974e8f53ae17359b7edc56595d2f485d0ba134a7edda9a9dad8f74a71         802  BitCrypto/BitCrypto.Core/include/bitcrypto/utils/safe.h
 85181d1dad5ca27c19af0c9a49d9571d9f390e322fb0644d91e23de950ed294f         921  BitCrypto/BitCrypto.Core/include/bitcrypto/utils/validation.h
 f55bb0e34a0d4f2d678a3f794661cc5ce7f133731adc76fd54df1b75555af481          16  BitCrypto/BitCrypto.Core/src/unity.cpp
-59bd35eba81abc1f0539221522fcf9101a23511e83b4377082337e58395f46bf         187  BitCrypto/BitCrypto.Core/tests/CMakeLists.txt
+283d92560c40f8fc03286d71c9591c58bca051c49be836299349f3ff2d77cc37         376  BitCrypto/BitCrypto.Core/tests/CMakeLists.txt
 bbe2f8ecbed36787365d16c2776d1df127d881b8652576ca4ff6d47db9674b6d        1374  BitCrypto/BitCrypto.Core/tests/tests_msm_pippenger.cpp
+ad58c3f20e512b1486117fff958450ad81a8c9b1d1c1d00b5e28845116ec440b        1316  BitCrypto/BitCrypto.Core/tests/tests_endo_shamir.cpp
 7fab1a42d24b9afd45c32bfe6bbdd03185817f36c49802abedef788d777a60bf        2918  BitCrypto/docs/REGRAS.md
 e55aeea1a8448449ca6c051a63e690563d4e48f6b9760e4891ebbf13ed2ee2a4        1190  BitCrypto/docs/API_CLI_REFERENCE.md
 2d0c1512a5ecb1d3cdb071c866332c3f6c817005a3621336cfd4edb4b0dbb317         993  BitCrypto/docs/BUILD_WINDOWS.md
@@ -57,7 +59,7 @@ e55aeea1a8448449ca6c051a63e690563d4e48f6b9760e4891ebbf13ed2ee2a4        1190  Bi
 98902171c420b458e0953266399f006c1e1e6031d3282207b5348ccd7ce58016        1054  BitCrypto/docs/TRANSACOES_PSBT.md
 844b10a15441592a86bcdc31bdd77631e877badcd1f456f64537a4972fa97264         663  BitCrypto/docs/GUARDRAILS_OVERVIEW.md
 507de93a073d314bc30a22ea8d988e3a3fe08f0f68d0c4f1483e782851c7ab6a         483  BitCrypto/docs/RELEASE_NOTES_2.5.0.md
-c309ce9187318ebfb5cdca5a7fe0cd3034a806b4d6196218fa46e458505d19f2        5414  BitCrypto/docs/ARQUITETURA.md
+768db921ea05fd860017e7f61d3fa355fe8440bd9fb4d4ab17980b835b56543d        5513  BitCrypto/docs/ARQUITETURA.md
 b3b82c9d0cbff7a63da178e08914fc61095be9512c1d80d5910e3bf952a884e5         666  BitCrypto/docs/SECURITY_MODEL.md
 5b64c72796706804e727558f31071f0237441d487949b1525eed3405f012ec9c        3531  BitCrypto/docs/PLANO_DE_CONSTRUCAO.md
 14e488f36f46b09c08d1489fe38dbbad62aa2656aa981ef13bb193acc9d33d82         348  BitCrypto/docs/CLI_GUIDE.md
@@ -80,7 +82,7 @@ c6c62d5706215357a759e3067bc97078b8c9e46ea6373b4a11e3660d417c9d92       20529  Bi
 4bf2c9574c8c0bce3d5e97213ff4cb44a523e282533cc06d5a83d13b24e6544c        2263  BitCrypto/docs/FLUXO_DE_CONSTRUCAO.md
 816df45b6b91f42d3945b969b46deac3f07a98f2a6643fa85c171567c701124c         234  BitCrypto/docs/RELEASE_NOTES_2.4.2.md
 37d0d13949d04bfbf3dce38e2bf8302d0f43cebef69184e0348ea669a0cdad4c         138  BitCrypto/docs/RELEASING.md
-2784a9627d86333ed405a234d250c2a6ce6337f2e5aa0250cce1b1e97d91cf63        3448  BitCrypto/docs/COMPLETUDE.md
+797014d24ca20b6853732c8c5d1832c41b1f1c66f923df42daaa60a04304c4d5        3569  BitCrypto/docs/COMPLETUDE.md
 a98708d150c7f5f8fa4d19224d3dcf43d1a917c93c2114cbb3acbac66840d083         343  BitCrypto/docs/AGENTS.md
 adf34e456836b56312efddd72cc434acbe016ac5370712960100dce732679fc3         744  BitCrypto/docs/ACEITE_QA_2.4.6.md
 81c262cfe61aa12fe25b4cd07008212a5ee067eb3dd5712eddfe0a9ea059ebf2         698  BitCrypto/docs/ACEITE_QA_2.4.2.md
@@ -156,7 +158,7 @@ f55bb0e34a0d4f2d678a3f794661cc5ce7f133731adc76fd54df1b75555af481          16  Bi
 a5588cb70dbb7a4b646740315c61d6d4420d0fc3ba9f32ed1116de6b652e2b2d        3530  BitCrypto/BitCrypto.Math/include/bitcrypto/math/biguint.h
 832d26f0f5e2c9702638fb84fa11e012322458c381aae869175d6b98cd0dcdbd        7564  BitCrypto/BitCrypto.Math/include/bitcrypto/math/fe256.h
 c7db08935c46d708ec03f190e7f1de751a146fc418d98aa8de62a541ec18d8d3        3147  BitCrypto/tools/guardrails/package_release.py
-28a915dde2c133032d43882ffba6ed1cded57e89de4b9466bf578b8c725db9ee        2114  BitCrypto/tools/guardrails/check_features.py
+6fad035990accff5f2e314f79b0c8964b89e331d8c350a997e9eb517b1e56b58        2234  BitCrypto/tools/guardrails/check_features.py
 42ad743bcd2f5a38730b380aad4a1a5572390b7bea08f81cd9320d894d9aa570        1514  BitCrypto/tools/guardrails/check_manifest.py
 58ab6c9828bf0dc40a661ecef51e5dd70d68213bab58254bddce59113ce57859         781  BitCrypto/tools/guardrails/check_stubs.py
 9c4c8f48bea7c967e743e789203395e0ccdd3e955c393442fae9e48cc567285d         927  BitCrypto/tools/guardrails/check_no_external_deps.py

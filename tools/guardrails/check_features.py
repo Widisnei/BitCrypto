@@ -16,6 +16,7 @@ anchors = {
     "WSCLI": "BitCrypto.WSCLI/src/main.cpp",
     "PSBTv2": "BitCrypto.PSBTv2/include/bitcrypto/psbt2/psbt_v2.h",
     "msm_pippenger.h": "BitCrypto.Core/include/bitcrypto/msm_pippenger.h",
+    "endo_shamir.h": "BitCrypto.Core/include/bitcrypto/endo_shamir.h",
 }
 
 tokens = {
@@ -31,6 +32,7 @@ tokens = {
     "WSCLI": ["witness_items=", "witness_sizes=", "witness_preview=", "tap_control_block_depth="],
     "PSBTv2": ["unknown_in_kv"],
     "msm_pippenger.h": ["wNAF", "precompute"],
+    "endo_shamir.h": ["endomorphism", "Shamir"],
 }
 
 ok = True

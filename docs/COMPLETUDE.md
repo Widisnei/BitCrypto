@@ -33,6 +33,7 @@ Durante as séries 0.x e 1.x foram introduzidas as assinaturas determinísticas 
 - Guard‑rails reforçados com tokens adicionais para EC (wNAF/precompute) e preview de witness; manifesto e integridade validados.
 - Compatibilidade confirmada com Visual Studio 2022, Windows 11 x64 e CUDA 13, mantendo **zero dependências externas**.
 - Introdução da multiplicação multi‑escalar **MSM Pippenger** com janelas adaptativas, suporte a **wNAF** e contexto opcional de **precompute**.
+- Rotinas de **endomorphism** para decomposição de escalar e **Shamir's trick** para cálculo combinado `a·P + b·G`.
 
 ## Notas adicionais
 

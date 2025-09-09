@@ -5,12 +5,12 @@ using UnknownKV = std::pair<std::vector<uint8_t>, std::vector<uint8_t>>; // unkn
 #include <string>
 #include <cstring>
 #include <utility>
-#include "../../BitCrypto.Encoding/include/bitcrypto/encoding/varint.h"
-#include "../../BitCrypto.Encoding/include/bitcrypto/encoding/base64.h"
+#include <bitcrypto/encoding/varint.h>
+#include <bitcrypto/encoding/base64.h>
 #include "tx.h"
 #include "sign.h"
 #include "taproot.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/hash160.h"
+#include <bitcrypto/hash/hash160.h>
 
 namespace bitcrypto { namespace psbt2 {
 

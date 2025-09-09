@@ -1,6 +1,6 @@
 #pragma once
-#include "../../BitCrypto.Core/include/bitcrypto/base.h"
-#include "../../BitCrypto.Core/include/bitcrypto/u256.h"
+#include <bitcrypto/base.h>
+#include <bitcrypto/u256.h>
 namespace bitcrypto { namespace sign {
 struct Fn{
     uint64_t v[4];

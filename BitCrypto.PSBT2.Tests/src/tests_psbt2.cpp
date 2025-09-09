@@ -1,14 +1,14 @@
 #include <iostream>
 #include <vector>
 #include <cstring>
-#include "../BitCrypto.Core/include/bitcrypto/base.h"
-#include "../BitCrypto.Core/include/bitcrypto/ec_secp256k1.h"
-#include "../BitCrypto.Hash/include/bitcrypto/hash/hash160.h"
-#include "../BitCrypto.Hash/include/bitcrypto/hash/sha256.h"
-#include "../BitCrypto.Tx/include/bitcrypto/tx/tx.h"
-#include "../BitCrypto.Tx/include/bitcrypto/tx/miniscript.h"
-#include "../BitCrypto.PSBTv2/include/bitcrypto/psbt2/psbt_v2.h"
-#include "../BitCrypto.PSBTv2/include/bitcrypto/psbt2/psbt_v2_sign.h"
+#include <bitcrypto/base.h>
+#include <bitcrypto/ec_secp256k1.h>
+#include <bitcrypto/hash/hash160.h>
+#include <bitcrypto/hash/sha256.h>
+#include <bitcrypto/tx/tx.h>
+#include <bitcrypto/tx/miniscript.h>
+#include <bitcrypto/psbt2/psbt_v2.h>
+#include <bitcrypto/psbt2/psbt_v2_sign.h>
 
 using namespace bitcrypto;
 

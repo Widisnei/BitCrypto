@@ -2,8 +2,8 @@
 #include <cstdint>
 #include <cstddef>
 #include <cstring>
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/hmac_sha256.h"
-#include "../../BitCrypto.Core/include/bitcrypto/u256.h"
+#include <bitcrypto/hash/hmac_sha256.h>
+#include <bitcrypto/u256.h>
 namespace bitcrypto { namespace sign {
 // RFC6979 HMAC-DRBG (SHA-256) — retorna k em [1,n-1] para secp256k1
 inline void rfc6979_nonce(const uint8_t priv32[32], const uint8_t msg32[32], uint8_t out_k[32]){

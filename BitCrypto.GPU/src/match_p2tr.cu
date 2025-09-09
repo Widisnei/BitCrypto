@@ -1,7 +1,7 @@
 #include "include/bitcrypto/gpu/match_p2tr_gpu.cuh"
 #include "include/bitcrypto/gpu/hash_gpu.cuh"
 #include "include/bitcrypto/gpu/ec_gpu.cuh"
-#include "../../BitCrypto.Core/include/bitcrypto/ec_secp256k1.h"
+#include <bitcrypto/ec_secp256k1.h>
 #include <cuda_runtime.h>
 #include <cstring>
 

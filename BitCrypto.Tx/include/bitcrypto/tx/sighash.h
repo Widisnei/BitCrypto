@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <vector>
 #include <cstring>
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/sha256.h"
+#include <bitcrypto/hash/sha256.h>
 #include "tx.h"
 
 namespace bitcrypto { namespace tx {

@@ -11,6 +11,7 @@ EXCLUDE_PATTERNS = [
     r'^MANIFEST_.*\.txt$',              # any manifest under project root
     r'^docs/AUDITORIA\.md$',            # legacy auditoria doc
     r'^tools/GUARDRAILS\.md$',          # legacy guardrails doc
+    r'^\.git/',                         # ignore metadata do repositório
 ]
 
 def sha256(p):

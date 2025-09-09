@@ -2,10 +2,10 @@
 #include <cstdint>
 #include <vector>
 #include <cstring>
-#include "../../BitCrypto.Tx/include/bitcrypto/tx/sign.h"
-#include "../../BitCrypto.Tx/include/bitcrypto/tx/taproot.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/hash160.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/sha256.h"
+#include <bitcrypto/tx/sign.h>
+#include <bitcrypto/tx/taproot.h>
+#include <bitcrypto/hash/hash160.h>
+#include <bitcrypto/hash/sha256.h>
 #include "psbt_v2.h"
 
 namespace bitcrypto { namespace psbt2 {

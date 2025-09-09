@@ -4,9 +4,9 @@
 #include <string>
 #include <map>
 #include <cstring>
-#include "../..//BitCrypto.Hash/include/bitcrypto/hash/sha256.h"
-#include "../..//BitCrypto.Encoding/include/bitcrypto/encoding/base58.h"
-#include "../..//BitCrypto.Encoding/include/bitcrypto/encoding/b58check.h"
+#include <bitcrypto/hash/sha256.h>
+#include <bitcrypto/encoding/base58.h>
+#include <bitcrypto/encoding/b58check.h>
 #include "tx.h"
 #include "varint.h"
 

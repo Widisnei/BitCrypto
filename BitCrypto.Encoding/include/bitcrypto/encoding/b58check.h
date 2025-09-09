@@ -3,7 +3,7 @@
 #include <vector>
 #include <cstdint>
 #include <cstring>
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/sha256.h"
+#include <bitcrypto/hash/sha256.h>
 #include "base58.h"
 namespace bitcrypto { namespace encoding {
 

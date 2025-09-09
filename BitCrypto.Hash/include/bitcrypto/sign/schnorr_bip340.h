@@ -6,11 +6,11 @@
 #include <cstddef>
 #include <array>
 #include <string.h>
-#include "../hash/sha256.h"
-#include "../hash/tagged_hash.h"
-#include "../../BitCrypto.Core/include/bitcrypto/u256.h"
-#include "../../BitCrypto.Core/include/bitcrypto/scalar_n.h"
-#include "../../BitCrypto.Core/include/bitcrypto/ec_secp256k1.h"
+#include <bitcrypto/hash/sha256.h>
+#include <bitcrypto/hash/tagged_hash.h>
+#include <bitcrypto/u256.h>
+#include <bitcrypto/scalar_n.h>
+#include <bitcrypto/ec_secp256k1.h>
 
 namespace bitcrypto { namespace sign {
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "field_secp256k1.h"
+#include <bitcrypto/field_secp256k1.h>
 namespace bitcrypto {
 struct ECPointJ{ Fp X,Y,Z; };
 struct ECPointA{ Fp x,y; bool infinity; };
@@ -116,10 +116,6 @@ struct Secp256k1{
             }
         }
         return R;
-    }
-        ECPointJ R0{Fp::zero(),Fp::zero(),Fp::zero()}, R1=to_jacobian(P_aff);
-        for (int i=255;i>=0;i--){ uint64_t w=k.v[i/64]; uint64_t bit=(w>>(i%64))&1ULL; uint64_t m=0-bit; cswap(R0,R1,m); ECPointJ t0=add(R0,R1); ECPointJ t1=dbl(R1); R0=t0; R1=t1; cswap(R0,R1,m); }
-        return R0;
     }
     static BITCRYPTO_HD inline void scalar_mod_n(U256& k){
         const uint64_t N[4]={0xBFD25E8CD0364141ULL,0xBAAEDCE6AF48A03BULL,0xFFFFFFFFFFFFFFFEULL,0xFFFFFFFFFFFFFFFFULL};

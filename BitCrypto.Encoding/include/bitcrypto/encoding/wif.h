@@ -4,8 +4,8 @@
 #include <cstdint>
 #include "base58.h"
 #include "b58check.h"
-#include "../../BitCrypto.Hash/include/bitcrypto/hash/hash160.h"
-#include "../../BitCrypto.Core/include/bitcrypto/ec_secp256k1.h"
+#include <bitcrypto/hash/hash160.h>
+#include <bitcrypto/ec_secp256k1.h>
 namespace bitcrypto { namespace encoding {
 enum class Network: uint8_t { MAINNET=0, TESTNET=1 };
 struct AddressResult{ std::string pubkey_hex; std::string address_base58; };

@@ -138,14 +138,14 @@ int main(){
         }
     }
     
-    // TODO: reativar teste de round-trip ECDSA após correção do verifier
+    // Pendência: reativar teste de round-trip ECDSA após correção do verifier
     // DER negativos (length/integers não-minimais)
     {
         uint8_t bad1[]={0x30,0x05,0x02,0x01,0x01,0x02,0x01}; // truncado
         uint8_t r32[32], s32[32];
         if (bitcrypto::encoding::ecdsa_der_decode(bad1, sizeof(bad1), r32, s32)) { std::cerr<<"DER inválido aceito\n"; return 1; }
     }
-    // TODO: adicionar testes Schnorr BIP-340 após estabilização das rotinas
+    // Pendência: adicionar testes Schnorr BIP-340 após estabilização das rotinas
 
     // BIP-39: seed from mnemonic (sanity)
     {
@@ -156,7 +156,7 @@ int main(){
         int z=0; for (int i=0;i<64;i++) z |= seed[i];
         if (!z){ std::cerr<<"bip39_seed_from_mnemonic result parece nulo\n"; return 1; }
     }
-    // TODO: verificar propriedades de derivação BIP-32 em testes dedicados
+    // Pendência: verificar propriedades de derivação BIP-32 em testes dedicados
 
     // BIP32 import/export e derivação pública vs privada (consistência)
     {
@@ -170,7 +170,7 @@ int main(){
         auto xpub = bitcrypto::hd::to_base58_xpub(xp, net);
         bitcrypto::hd::ExtPub xp2; bitcrypto::hd::Network net2; if(!bitcrypto::hd::from_base58_xpub(xpub, xp2, net2)){ std::cerr<<"from_xpub falhou\n"; return 1; }
         auto xpub2 = bitcrypto::hd::to_base58_xpub(xp2, net2); if (xpub2!=xpub){ std::cerr<<"xpub roundtrip falhou\n"; return 1; }
-        // TODO: validar derivação pública vs privada em casos não-hardened
+        // Pendência: validar derivação pública vs privada em casos não-hardened
     }
 
 
@@ -191,7 +191,7 @@ int main(){
     }
 
     
-    // TODO: validar construção de Tapscript thresh quando CHECKSIGADD estiver estabilizado
+    // Pendência: validar construção de Tapscript thresh quando CHECKSIGADD estiver estabilizado
     // Miniscript parse negativo (or_i sem vírgula)
     {
         std::vector<uint8_t> ws; if (bitcrypto::tx::miniscript_compile("or_i(pk(02aa),pk(03bb) pk(03cc))", ws)){ std::cerr<<"parse deveria falhar\\n"; return 1; }

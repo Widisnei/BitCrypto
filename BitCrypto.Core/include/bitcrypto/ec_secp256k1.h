@@ -64,10 +64,17 @@ struct Secp256k1{
     }
     static BITCRYPTO_HD inline void cswap(ECPointJ& A, ECPointJ& B, uint64_t m){ for(int i=0;i<4;i++) cswap64(A.X.v[i],B.X.v[i],m); for(int i=0;i<4;i++) cswap64(A.Y.v[i],B.Y.v[i],m); for(int i=0;i<4;i++) cswap64(A.Z.v[i],B.Z.v[i],m); }
     static BITCRYPTO_HD inline ECPointJ scalar_mul(const U256& k, const ECPointA& P_aff){
-        // Constant-time ladder (mantemos para escalas secretas)
-        ECPointJ R0{Fp::zero(),Fp::zero(),Fp::zero()}, R1=to_jacobian(P_aff);
-        for (int i=255;i>=0;i--){ uint64_t w=k.v[i/64]; uint64_t bit=(w>>(i%64))&1ULL; uint64_t m=0-((uint64_t)bit);
-            ECPointJ t0=add(R0,R1); ECPointJ t1=dbl(R1); R0=t0; R1=t1; cswap(R0,R1,m); }
+        // Escada de Montgomery para evitar ramos dependentes do escalar
+        ECPointJ R0{Fp::zero(),Fp::zero(),Fp::zero()};
+        ECPointJ R1 = to_jacobian(P_aff);
+        for (int i=255;i>=0;i--){
+            uint64_t bit = (k.v[i/64]>>(i%64))&1ULL;
+            uint64_t m = 0 - bit;         // máscara: 0xFFFF.. quando bit=1
+            cswap(R0, R1, m);
+            R1 = add(R0, R1);
+            R0 = dbl(R0);
+            cswap(R0, R1, m);
+        }
         return R0;
     }
     // Caminho rápido público (não constant-time): wNAF com janela 5

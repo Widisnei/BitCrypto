@@ -14,6 +14,7 @@
 #include <bitcrypto/encoding/segwit.h>
 #include <bitcrypto/encoding/taproot.h>
 #include <bitcrypto/sign/sign.h>
+#include <bitcrypto/sign/bip322.h>
 #include <bitcrypto/encoding/der.h>
 #include <bitcrypto/hd/bip39.h>
 #include <bitcrypto/hd/bip32.h>
@@ -40,6 +41,19 @@ int main(){
         auto Pub = Secp256k1::derive_pubkey(k);
         uint8_t out[65]; size_t olen=0; encode_pubkey(Pub, true, out, olen);
         if (olen!=33 || (out[0]!=0x02 && out[0]!=0x03)){ std::cerr<<"PubKey comprimida inválida\n"; return 1; }
+    }
+    // BIP-322 message sign/verify
+    {
+        uint8_t k32[32]={0}; k32[31]=1;
+        U256 priv = U256::from_be32(k32);
+        auto pub = Secp256k1::derive_pubkey(priv);
+        std::string msg="bip322";
+        auto sig = bitcrypto::sign::sign_message(priv, msg);
+        if (!bitcrypto::sign::verify_message(pub, msg, sig)){ std::cerr<<"bip322 falhou\n"; return 1; }
+        sig.r[0]^=1;
+        if (bitcrypto::sign::verify_message(pub, msg, sig)){ std::cerr<<"bip322 aceitou assinatura alterada\n"; return 1; }
+        ECPointA inf{Fp::zero(), Fp::zero(), true};
+        if (bitcrypto::sign::verify_message(inf, msg, sig)){ std::cerr<<"bip322 aceitou pub inválida\n"; return 1; }
     }
     // Base58Check round-trip
     {

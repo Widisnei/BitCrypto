@@ -1,4 +1,4 @@
-add_library(BitCrypto.Sign STATIC src/unity.cpp)
+add_library(BitCrypto.Sign STATIC src/unity.cpp src/bip322.cpp)
 target_include_directories(BitCrypto.Sign PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/BitCrypto.Core/include
     ${CMAKE_SOURCE_DIR}/BitCrypto.Hash/include)

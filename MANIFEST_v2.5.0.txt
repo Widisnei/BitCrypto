@@ -84,7 +84,7 @@ d768c9dbbc0fc94fc40d92aa875c9c4612bc22ff153a950578f8336995ba69b5        3626  Bi
 ce5c32b02d859b7632b868205cc9590cfdcf0563fdf2e333a6035e32ffa0d746        1432  BitCrypto/BitCrypto.Core/include/bitcrypto/base.h
 53e79796c53a319b9f9631a165ed29cd6738d430847a9092261142fa02b17e08        4616  BitCrypto/BitCrypto.Core/include/bitcrypto/field_n.h
 c3cbf279c53c2d97a7423b27fd9a0a7366af1122f0423c9ec43b5822a30fd3a4        1317  BitCrypto/BitCrypto.Core/include/bitcrypto/ec_parse.h
-2ebfd26d4fb7698978ae2a5394e878e9561a99cbfcc2db4498465aab7b22eb38        4913  BitCrypto/BitCrypto.Core/include/bitcrypto/msm_pippenger.h
+6a205fd22b3ecf86468fcc7a565a958b1796e9f2570a54d7a4afdf12d4d26d7a        4957  BitCrypto/BitCrypto.Core/include/bitcrypto/msm_pippenger.h
 e22fd83ce9f3945dc594fb29a303f32775036cdeda9eb4b5082cae4f35e1350e         687  BitCrypto/BitCrypto.Core/include/bitcrypto/rng.h
 2b55cb592ef1c6f13086547b1450a60b49655bef1b9252a40658c16efffb9cde         358  BitCrypto/BitCrypto.Core/include/bitcrypto/util.h
 5f473630bca72f5f5c70f3e09f9cbc8c2310b18dcd934e3c096f443c79ec25a4        3637  BitCrypto/BitCrypto.Core/include/bitcrypto/scalar_n.h

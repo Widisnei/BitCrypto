@@ -17,6 +17,7 @@ anchors = {
     "PSBTv2": "BitCrypto.PSBTv2/include/bitcrypto/psbt2/psbt_v2.h",
     "msm_pippenger.h": "BitCrypto.Core/include/bitcrypto/msm_pippenger.h",
     "endo_shamir.h": "BitCrypto.Core/include/bitcrypto/endo_shamir.h",
+    "musig2.h": "BitCrypto.Schnorr/include/bitcrypto/schnorr/musig2.h",
 }
 
 tokens = {
@@ -33,6 +34,7 @@ tokens = {
     "PSBTv2": ["unknown_in_kv"],
     "msm_pippenger.h": ["wNAF", "precompute"],
     "endo_shamir.h": ["endomorphism", "Shamir"],
+    "musig2.h": ["MuSig2"],
 }
 
 ok = True

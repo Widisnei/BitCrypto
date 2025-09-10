@@ -67,7 +67,7 @@ Implementados na **v2.5.0** com referência ao **libsecp256k1**.  A decomposiç�
 
 Com MSM, endomorfismo e Shamir prontos, pode‑se implementar assinaturas agregadas e threshold.  As propostas de BIP‑340/341 já suportam **MuSig2** (agregação de chaves e assinaturas Schnorr) e existem protocolos **FROST** para threshold Schnorr.  As tarefas incluem:
 
-- Adicionar suporte a **MuSig2**: geração de chave agregada, combinação de *nonces* e produção/validação da assinatura agregada.  Isso exigirá operações `msm()` para somar múltiplos `sᵢ·Pᵢ` durante a agregação.
+- Suporte inicial a **MuSig2**: chave agregada via coeficientes hash com `msm()` já disponível; pendente combinar *nonces* e produzir/validar a assinatura agregada.
 - Implementar um protótipo de **FROST** para `t‑of‑n` assinaturas Schnorr.  Inclui criação de compromissos, distribuição de coeficientes de Lagrange e verificação das assinaturas parciais.  A biblioteca deve fornecer apenas a primitiva criptográfica; a orquestração multi‑party pertence a camadas superiores.
 - Criar vetores de teste e exemplos de CLI (`--musig2-sign`, `--musig2-verify`, `--frost-sign`, etc.) para demonstrar o uso das APIs.
 

@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <cstdlib>
 #include "ec_secp256k1.h"
 
 namespace bitcrypto {
@@ -108,7 +109,7 @@ static inline bool msm_pippenger(const std::vector<ECPointA>& points,
         for (size_t i=0;i<n;i++){
             int8_t digit = (pos < (int)wnafs[i].size()) ? wnafs[i][pos] : 0;
             if (digit){
-                int idx = (abs(digit)-1)/2;
+                int idx = (std::abs(digit)-1)/2;
                 ECPointA T = (*tables)[i][idx];
                 if (digit < 0){ T.y = Fp::sub(Fp::zero(), T.y); }
                 buckets[idx] = Secp256k1::add(buckets[idx], Secp256k1::to_jacobian(T));

@@ -60,7 +60,7 @@ static inline bool msm_pippenger(const std::vector<ECPointA>& points,
     if (n==0 || scalars.size()!=n){ out = ECPointA{Fp::zero(),Fp::zero(),true}; return false; }
 
     int w = pippenger_window(n);
-    int WSIZE = 1<<(w-1); // número de buckets (somente ímpares)
+    int WSIZE = 1<<(w-2); // número de buckets (somente ímpares)
 
     // Constrói ou reutiliza tabelas de precompute (precompute)
     std::vector<std::vector<ECPointA>> local_tables;

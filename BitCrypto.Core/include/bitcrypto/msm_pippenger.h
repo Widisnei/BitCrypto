@@ -106,10 +106,12 @@ static inline bool msm_pippenger(const std::vector<ECPointA>& points,
         if (len > max_len) max_len = len;
     }
 
-    ECPointJ R{Fp::zero(),Fp::zero(),Fp::zero()};
+    ECPointJ infinity{Fp::zero(),Fp::zero(),Fp::zero()};
+    ECPointJ R = infinity;
+    std::vector<ECPointJ> buckets(WSIZE, infinity);
     for (int pos = max_len-1; pos >= 0; --pos){
         R = Secp256k1::dbl(R);
-        std::vector<ECPointJ> buckets(WSIZE, ECPointJ{Fp::zero(),Fp::zero(),Fp::zero()});
+        std::fill(buckets.begin(), buckets.end(), infinity);
         for (size_t i=0;i<n;i++){
             int8_t digit = (pos < (int)wnafs[i].size()) ? wnafs[i][pos] : 0;
             if (digit){
@@ -119,7 +121,7 @@ static inline bool msm_pippenger(const std::vector<ECPointA>& points,
                 buckets[idx] = Secp256k1::add(buckets[idx], Secp256k1::to_jacobian(T));
             }
         }
-        ECPointJ acc{Fp::zero(),Fp::zero(),Fp::zero()};
+        ECPointJ acc = infinity;
         for (int i=WSIZE-1;i>0;--i){
             acc = Secp256k1::add(acc, buckets[i]);
             R = Secp256k1::add(R, acc);

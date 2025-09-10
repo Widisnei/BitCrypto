@@ -16,6 +16,7 @@
 #include <bitcrypto/encoding/b58check.h>
 #include <bitcrypto/encoding/taproot.h>
 #include <bitcrypto/sign/sign.h>
+#include <bitcrypto/sign/bip322.h>
 #include <bitcrypto/rng/rng.h>
 #include <bitcrypto/kdf/pbkdf2_hmac_sha512.h>
 #include <bitcrypto/hd/bip32.h>
@@ -41,6 +42,8 @@ EC-ASSINATURA:
   --verify-ecdsa --pub <hex33|65> --sig <DERhex> --msg32 <hex32>
   --sign-schnorr --priv <hex32> --msg32 <hex32> [--aux <hex32>]
   --verify-schnorr --xonly <hex32> --sig <hex64> --msg32 <hex32>
+  --sign-message --priv <hex32> --msg "<txt>"
+  --verify-message --pub <hex33|65> --sig <hex64> --msg "<txt>"
 
 HD (BIP-39/32/44):
   --mnemonic --strength <128|160|192|224|256> [--pass <pass>]
@@ -54,14 +57,13 @@ Notas:
 - Wordlist BIP-39 atual em resources/bip39/english.txt (dev). Substitua pela canônica p/ interoperar.
 )"<<std::endl;
 }
-
 int main(int argc, char** argv){
     if (argc<=1){ print_help(); return 0; }
 
-    bool sign_ecdsa=false, verify_ecdsa=false, sign_schnorr=false, verify_schnorr=false;
+    bool sign_ecdsa=false, verify_ecdsa=false, sign_schnorr=false, verify_schnorr=false, sign_message=false, verify_message=false;
     bool want_mnemonic=false, want_seed=false, want_xprv=false, want_derive=false, want_xpub_from_xprv=false, want_derive_pub=false;
     bool testnet_hd=false;
-    std::string msg32_hex, sig_hex, pub_hex, xonly_hex, aux_hex;
+    std::string msg32_hex, sig_hex, pub_hex, xonly_hex, aux_hex, priv_hex, msg_txt;
     std::string mnemonic, passphrase, seed_hex, xprv_b58, xpub_b58, path_str, xprv_import, xpub_import;
     int strength_bits=128;
 
@@ -71,11 +73,15 @@ int main(int argc, char** argv){
         else if (a=="--verify-ecdsa") verify_ecdsa=true;
         else if (a=="--sign-schnorr") sign_schnorr=true;
         else if (a=="--verify-schnorr") verify_schnorr=true;
+        else if (a=="--sign-message") sign_message=true;
+        else if (a=="--verify-message") verify_message=true;
         else if (a=="--msg32" && i+1<argc) msg32_hex=argv[++i];
         else if (a=="--sig" && i+1<argc) sig_hex=argv[++i];
         else if (a=="--pub" && i+1<argc) pub_hex=argv[++i];
         else if (a=="--xonly" && i+1<argc) xonly_hex=argv[++i];
         else if (a=="--aux" && i+1<argc) aux_hex=argv[++i];
+        else if (a=="--msg" && i+1<argc) msg_txt=argv[++i];
+        else if (a=="--priv" && i+1<argc) priv_hex=argv[++i];
 
         else if (a=="--mnemonic") want_mnemonic=true;
         else if (a=="--strength" && i+1<argc) strength_bits=std::stoi(argv[++i]);
@@ -101,14 +107,6 @@ int main(int argc, char** argv){
         std::vector<uint8_t> m=to_bytes(msg32_hex);
 
         if (sign_ecdsa){
-            if (seed_hex.empty() && xprv_import.empty() && pub_hex.empty()){
-                // requires --priv
-            }
-        }
-
-        if (sign_ecdsa){
-            std::string priv_hex; // expect via --priv
-            for (int i=1;i<argc;i++){ if (std::string(argv[i])=="--priv" && i+1<argc){ priv_hex=argv[i+1]; break; } }
             if (priv_hex.size()!=64){ std::cerr<<"--priv <hex32> é obrigatório para --sign-ecdsa\n"; return 1; }
             auto d=to_bytes(priv_hex); bitcrypto::sign::ECDSA_Signature sig{};
             if (!bitcrypto::sign::ecdsa_sign_rfc6979(d.data(), m.data(), sig)){ std::cerr<<"Falha ECDSA\n"; return 1; }
@@ -125,7 +123,6 @@ int main(int argc, char** argv){
             std::cout<<(ok?"OK":"FAIL")<<"\n"; return ok?0:1;
         }
         if (sign_schnorr){
-            std::string priv_hex; for (int i=1;i<argc;i++){ if (std::string(argv[i])=="--priv" && i+1<argc){ priv_hex=argv[i+1]; break; } }
             if (priv_hex.size()!=64){ std::cerr<<"--priv <hex32> é obrigatório\n"; return 1; }
             auto d=to_bytes(priv_hex); uint8_t aux[32]; bool use_aux=false;
             if (!aux_hex.empty()){ auto a=to_bytes(aux_hex); if (a.size()!=32){ std::cerr<<"--aux inválido\n"; return 1; } std::memcpy(aux,a.data(),32); use_aux=true; }
@@ -140,7 +137,38 @@ int main(int argc, char** argv){
             std::cout<<(ok?"OK":"FAIL")<<"\n"; return ok?0:1;
         }
     }
-
+    if (sign_message || verify_message){
+        if (msg_txt.empty()){ std::cerr<<"--msg requerido\n"; return 1; }
+        if (sign_message){
+            if (priv_hex.size()!=64){ std::cerr<<"--priv <hex32> obrigatório\n"; return 1; }
+            auto d=to_bytes(priv_hex);
+            U256 k = U256::from_be32(d.data());
+            auto sig = bitcrypto::sign::sign_message(k, msg_txt);
+            std::cout<<bytes_to_hex(sig.r,32)<<bytes_to_hex(sig.s,32)<<"\n"; return 0;
+        }
+        if (verify_message){
+            if (pub_hex.empty() || sig_hex.size()!=128){ std::cerr<<"--pub <hex33|65> e --sig <hex64>\n"; return 1; }
+            std::vector<uint8_t> Q; if (!hex_to_bytes(pub_hex, Q) || (Q.size()!=33 && Q.size()!=65)){ std::cerr<<"--pub inválido\n"; return 1; }
+            std::vector<uint8_t> S; if (!hex_to_bytes(sig_hex, S) || S.size()!=64){ std::cerr<<"--sig inválido\n"; return 1; }
+            ECPointA P;
+            uint8_t prefix=Q[0];
+            if (prefix==0x04 && Q.size()==65){
+                U256 x=U256::from_be32(Q.data()+1), y=U256::from_be32(Q.data()+33);
+                P = {Fp::from_u256_nm(x), Fp::from_u256_nm(y), false};
+                Fp y2=Fp::sqr(P.y); Fp rhs=Fp::add(Fp::mul(Fp::sqr(P.x), P.x), Secp256k1::b());
+                bool ok=(y2.v[0]==rhs.v[0] && y2.v[1]==rhs.v[1] && y2.v[2]==rhs.v[2] && y2.v[3]==rhs.v[3]);
+                if(!ok){ std::cerr<<"--pub inválido\n"; return 1; }
+            } else if ((prefix==0x02 || prefix==0x03) && Q.size()==33){
+                U256 x=U256::from_be32(Q.data()+1);
+                if(!Secp256k1::lift_x_even_y(x,P)){ std::cerr<<"--pub inválido\n"; return 1; }
+                U256 y_nm=P.y.to_u256_nm(); bool odd=(y_nm.v[0]&1ULL)!=0ULL;
+                if ((prefix==0x03)!=odd) P.y=Fp::sub(Fp::zero(), P.y);
+            } else { std::cerr<<"--pub inválido\n"; return 1; }
+            bitcrypto::sign::Signature sg; std::memcpy(sg.r,S.data(),32); std::memcpy(sg.s,S.data()+32,32);
+            bool ok = bitcrypto::sign::verify_message(P, msg_txt, sg);
+            std::cout<<(ok?"OK":"FAIL")<<"\n"; return ok?0:1;
+        }
+    }
     // ---- HD Wallet ----
     if (want_mnemonic){
         if (!(strength_bits==128||strength_bits==160||strength_bits==192||strength_bits==224||strength_bits==256)){

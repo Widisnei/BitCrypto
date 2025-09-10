@@ -25,6 +25,10 @@ Durante as séries 0.x e 1.x foram introduzidas as assinaturas determinísticas 
 - **PSBT v2** passou a preservar pares **unknown K/V** (globais/inputs/outputs), garantindo compatibilidade com extensões futuras do protocolo.
 - Foi realizada uma limpeza geral na documentação e atualizados **ROADMAP/CHANGELOG**.
 
+## v2.5.1
+
+- Suporte a assinatura e verificação de mensagens genéricas (BIP‑322) com comandos de CLI.
+
 ## v2.5.0
 
 - Otimização da multiplicação escalar `s·G` com **wNAF** (janela 4) e **pré‑cálculo de G** (odd 1..15), aumentando a velocidade de geração de pontos.

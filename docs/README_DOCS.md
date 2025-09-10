@@ -6,7 +6,7 @@ Este diretório contém documentos complementares à documentação principal do
 
 - **Notas de release (`RELEASE_NOTES_*.md`)** — descritivo das mudanças em cada versão 2.x (ex.: `RELEASE_NOTES_2.5.0.md`).
 - **Aceites de QA (`ACEITE_QA_*.md`)** — checklists de testes de fumaça e de guard‑rails para cada release.
-- **Guia de CLI (`CLI_GUIDE.md`)** — resumo das opções disponíveis nas ferramentas de linha de comando (MSCLI, PSBTCLI, WSCLI, Bench, etc.).
+- **Guia de CLI (`CLI_GUIDE.md`)** — resumo das opções disponíveis nas ferramentas de linha de comando (MSCLI, PSBTCLI, WSCLI, Bench, etc.) e agora inclui comandos de assinatura de mensagens (BIP‑322).
 - **Benchmarks (`BENCHMARKS.md`)** — instruções sobre como executar e interpretar os benchmarks de throughput.
 - **Completude (`COMPLETUDE.md`)** — resumo dos marcos já implementados até a versão 2.5.0.
 - **Arquitetura (`ARQUITETURA.md`)** — descrição modular da biblioteca na versão 2.5.0.

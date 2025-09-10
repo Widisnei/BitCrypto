@@ -6,6 +6,7 @@
 #include <bitcrypto/hash/sha256.h>
 #include <bitcrypto/msm_pippenger.h>
 #include <bitcrypto/sign/sign.h>
+#include <bitcrypto/encoding/taproot.h>
 
 // Inspirado na implementação MuSig2 do libsecp256k1; analisamos
 // a biblioteca de referência para adaptar agregação de chaves,
@@ -110,10 +111,24 @@ static inline bool musig2_verify(const std::vector<ECPointA>& pubs,
                                  const std::vector<U256>& parts,
                                  const uint8_t msg[32],
                                  PippengerContext* ctx=nullptr){
-    ECPointA P; uint8_t sig[64];
-    if(!musig2_sign(pubs, nonces, parts, P, sig, ctx)) return false;
-    uint8_t pubx[32]; P.x.to_u256_nm().to_be32(pubx);
-    return bitcrypto::sign::schnorr_verify_bip340(pubx, msg, sig);
+    ECPointA P,R; U256 s;
+    if(!musig2_key_aggregate(pubs, P, ctx)) return false;
+    if(!musig2_nonce_aggregate(nonces, R, ctx)) return false;
+    if(!musig2_partial_aggregate(parts, s)) return false;
+    uint8_t rx[32]; R.x.to_u256_nm().to_be32(rx);
+    uint8_t px[32]; P.x.to_u256_nm().to_be32(px);
+    uint8_t buf[96]; std::memcpy(buf, rx, 32); std::memcpy(buf+32, px, 32); std::memcpy(buf+64, msg, 32);
+    uint8_t eh[32]; hash::sha256_tagged("BIP0340/challenge", buf, sizeof(buf), eh);
+    U256 e = U256::from_be32(eh); Secp256k1::scalar_mod_n(e);
+    ECPointJ lhs = Secp256k1::scalar_mul(s, Secp256k1::G());
+    ECPointJ rhs1 = Secp256k1::scalar_mul(e, P);
+    ECPointA rhs1a = Secp256k1::to_affine(rhs1); rhs1a.y = Fp::sub(Fp::zero(), rhs1a.y);
+    ECPointJ rhs = Secp256k1::add(Secp256k1::to_jacobian(R), Secp256k1::to_jacobian(rhs1a));
+    if (Secp256k1::is_infinity(rhs)) return false;
+    ECPointA La = Secp256k1::to_affine(lhs);
+    ECPointA Ra = Secp256k1::to_affine(rhs);
+    return La.x.v[0]==Ra.x.v[0] && La.x.v[1]==Ra.x.v[1] && La.x.v[2]==Ra.x.v[2] && La.x.v[3]==Ra.x.v[3] &&
+           La.y.v[0]==Ra.y.v[0] && La.y.v[1]==Ra.y.v[1] && La.y.v[2]==Ra.y.v[2] && La.y.v[3]==Ra.y.v[3];
 }
 
 }} // namespaces

@@ -10,20 +10,37 @@ struct Fn{
     static constexpr uint64_t ONE_NM[4] = {1,0,0,0};
     BITCRYPTO_HD static inline Fn zero(){ return Fn{{0,0,0,0}}; }
     BITCRYPTO_HD inline static uint64_t mac64(uint64_t a,uint64_t b,uint64_t acc,uint64_t& carry){
-        unsigned __int128 t = (unsigned __int128)a*b + acc + carry;
-        carry = (uint64_t)(t >> 64);
-        return (uint64_t)t;
+        uint64_t hi,lo; mul64x64_128(a,b,hi,lo);
+        uint64_t r = acc + lo; uint64_t c1 = (r<acc);
+        uint64_t r2 = r + carry; uint64_t c2 = (r2<r);
+        carry = hi + c1 + c2;
+        return r2;
     }
     BITCRYPTO_HD inline static void sub_n_if_ge(uint64_t x[4]){
         uint64_t br=0; uint64_t t0=subb64(x[0],N[0],br), t1=subb64(x[1],N[1],br), t2=subb64(x[2],N[2],br), t3=subb64(x[3],N[3],br);
         uint64_t m=0-(uint64_t)(1-br); x[0]=(x[0]&~m)|(t0&m); x[1]=(x[1]&~m)|(t1&m); x[2]=(x[2]&~m)|(t2&m); x[3]=(x[3]&~m)|(t3&m);
     }
     BITCRYPTO_HD inline static void mont_mul(const uint64_t a[4], const uint64_t b[4], uint64_t r[4]){
-        uint64_t T[8]={0,0,0,0,0,0,0,0};
-        for(int i=0;i<4;i++){ uint64_t c=0; T[i+0]=mac64(a[i],b[0],T[i+0],c); T[i+1]=mac64(a[i],b[1],T[i+1],c); T[i+2]=mac64(a[i],b[2],T[i+2],c); T[i+3]=mac64(a[i],b[3],T[i+3],c);
-            uint64_t before=T[i+4]; T[i+4]=T[i+4]+c; uint64_t cc=(T[i+4]<before); int k=i+5; while(cc){ before=T[k]; T[k]=T[k]+1; cc=(T[k]<before); k++; } }
-        for(int i=0;i<4;i++){ uint64_t m=T[i]*N0_PRIME; uint64_t c=0; T[i+0]=mac64(m,N[0],T[i+0],c); T[i+1]=mac64(m,N[1],T[i+1],c); T[i+2]=mac64(m,N[2],T[i+2],c); T[i+3]=mac64(m,N[3],T[i+3],c);
-            uint64_t before=T[i+4]; T[i+4]=T[i+4]+c; uint64_t cc=(T[i+4]<before); int k=i+5; while(cc){ before=T[k]; T[k]=T[k]+1; cc=(T[k]<before); k++; } }
+        uint64_t T[9]={0,0,0,0,0,0,0,0,0};
+        for(int i=0;i<4;i++){
+            uint64_t c=0;
+            T[i+0]=mac64(a[i],b[0],T[i+0],c);
+            T[i+1]=mac64(a[i],b[1],T[i+1],c);
+            T[i+2]=mac64(a[i],b[2],T[i+2],c);
+            T[i+3]=mac64(a[i],b[3],T[i+3],c);
+            uint64_t before=T[i+4]; T[i+4]+=c; uint64_t cc=(T[i+4]<before); int k=i+5;
+            while(cc && k<9){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
+        }
+        for(int i=0;i<4;i++){
+            uint64_t m=T[i]*N0_PRIME; uint64_t c=0;
+            T[i+0]=mac64(m,N[0],T[i+0],c);
+            T[i+1]=mac64(m,N[1],T[i+1],c);
+            T[i+2]=mac64(m,N[2],T[i+2],c);
+            T[i+3]=mac64(m,N[3],T[i+3],c);
+            uint64_t before=T[i+4]; T[i+4]+=c; uint64_t cc=(T[i+4]<before); int k=i+5;
+            while(cc && k<9){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
+            T[i]=0; // limpa o limb já reduzido
+        }
         r[0]=T[4]; r[1]=T[5]; r[2]=T[6]; r[3]=T[7]; sub_n_if_ge(r);
     }
     BITCRYPTO_HD inline static Fn from_u256_nm(const U256& a){ Fn r; mont_mul(a.v, RR, r.v); return r; }

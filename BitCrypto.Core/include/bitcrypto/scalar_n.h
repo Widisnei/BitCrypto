@@ -11,7 +11,7 @@ struct Sn{ // escalar mod n (ordem do grupo)
     static constexpr uint64_t RR[4] = {0x896CF21467D7D140ULL,0x741496C20E7CF878ULL,0xE697F5E45BCD07C6ULL,0x9D671CD581C69BC5ULL};
     static constexpr uint64_t ONE_NM[4] = {1,0,0,0}; // Monty(1)
 
-    BITCRYPTO_HD inline static uint64_t mac64(uint64_t a,uint64_t b,uint64_t acc,uint64_t& carry){ uint64_t hi,lo; mul64x64_128(a,b,hi,lo); uint64_t r=acc+lo; uint64_t c1=(r<acc); uint64_t r2=r+carry; uint64_t c2=(r2<r); carry=hi+c1+c2; return r2; }
+    BITCRYPTO_HD inline static uint64_t mac64(uint64_t a,uint64_t b,uint64_t acc,uint64_t& carry){ unsigned __int128 t=(unsigned __int128)a*b + acc + carry; carry=(uint64_t)(t>>64); return (uint64_t)t; }
     BITCRYPTO_HD inline static void sub_n_if_ge(uint64_t x[4]){ uint64_t br=0; uint64_t t0=subb64(x[0],N[0],br), t1=subb64(x[1],N[1],br), t2=subb64(x[2],N[2],br), t3=subb64(x[3],N[3],br); uint64_t m=0-(uint64_t)(1-br); x[0]=(x[0]&~m)|(t0&m); x[1]=(x[1]&~m)|(t1&m); x[2]=(x[2]&~m)|(t2&m); x[3]=(x[3]&~m)|(t3&m); }
     BITCRYPTO_HD inline static void mont_mul(const uint64_t a[4], const uint64_t b[4], uint64_t r[4]){ uint64_t T[8]={0,0,0,0,0,0,0,0};
         for(int i=0;i<4;i++){ uint64_t c=0; T[i+0]=mac64(a[i],b[0],T[i+0],c); T[i+1]=mac64(a[i],b[1],T[i+1],c); T[i+2]=mac64(a[i],b[2],T[i+2],c); T[i+3]=mac64(a[i],b[3],T[i+3],c);

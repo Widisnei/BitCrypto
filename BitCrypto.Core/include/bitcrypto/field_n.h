@@ -20,8 +20,9 @@ struct Fn{
         x[0]=(x[0]&~m)|(t0&m); x[1]=(x[1]&~m)|(t1&m); x[2]=(x[2]&~m)|(t2&m); x[3]=(x[3]&~m)|(t3&m);
     }
     BITCRYPTO_HD inline static uint64_t mac64(uint64_t a,uint64_t b,uint64_t acc,uint64_t& carry){
-        uint64_t hi,lo; mul64x64_128(a,b,hi,lo); uint64_t r=acc+lo; uint64_t c1=(r<acc);
-        uint64_t r2=r+carry; uint64_t c2=(r2<r); carry=hi+c1+c2; return r2;
+        unsigned __int128 t = (unsigned __int128)a*b + acc + carry;
+        carry = (uint64_t)(t >> 64);
+        return (uint64_t)t;
     }
     BITCRYPTO_HD inline static void mont_mul(const uint64_t a[4], const uint64_t b[4], uint64_t r[4]){
         uint64_t T[9]={0,0,0,0,0,0,0,0,0};

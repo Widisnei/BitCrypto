@@ -10,7 +10,9 @@ struct Fn{
     static constexpr uint64_t ONE_NM[4] = {1,0,0,0};
     BITCRYPTO_HD static inline Fn zero(){ return Fn{{0,0,0,0}}; }
     BITCRYPTO_HD inline static uint64_t mac64(uint64_t a,uint64_t b,uint64_t acc,uint64_t& carry){
-        uint64_t hi,lo; mul64x64_128(a,b,hi,lo); uint64_t r=acc+lo; uint64_t c1=(r<acc); uint64_t r2=r+carry; uint64_t c2=(r2<r); carry=hi+c1+c2; return r2;
+        unsigned __int128 t = (unsigned __int128)a*b + acc + carry;
+        carry = (uint64_t)(t >> 64);
+        return (uint64_t)t;
     }
     BITCRYPTO_HD inline static void sub_n_if_ge(uint64_t x[4]){
         uint64_t br=0; uint64_t t0=subb64(x[0],N[0],br), t1=subb64(x[1],N[1],br), t2=subb64(x[2],N[2],br), t3=subb64(x[3],N[3],br);

@@ -8,7 +8,7 @@ struct Fn{
     static constexpr uint64_t N0_PRIME = 0x4B0DFF665588B13FULL; // -N^{-1} mod 2^64
     static constexpr uint64_t RR[4] = {0x896CF21467D7D140ULL,0x741496C20E7CF878ULL,0xE697F5E45BCD07C6ULL,0x9D671CD581C69BC5ULL}; // R^2 mod N
     BITCRYPTO_HD static inline Fn zero(){ return Fn{{0,0,0,0}}; }
-    BITCRYPTO_HD static inline uint64_t mac64(uint64_t a,uint64_t b,uint64_t acc,uint64_t& carry){ uint64_t hi,lo; mul64x64_128(a,b,hi,lo); uint64_t r=acc+lo; uint64_t c1=(r<acc); uint64_t r2=r+carry; uint64_t c2=(r2<r); carry=hi+c1+c2; return r2; }
+    BITCRYPTO_HD static inline uint64_t mac64(uint64_t a,uint64_t b,uint64_t acc,uint64_t& carry){ unsigned __int128 t=(unsigned __int128)a*b + acc + carry; carry=(uint64_t)(t>>64); return (uint64_t)t; }
     BITCRYPTO_HD static inline void sub_n_if_ge(uint64_t x[4]){
         const uint64_t* M=N; uint64_t br=0;
         uint64_t t0=subb64(x[0],M[0],br), t1=subb64(x[1],M[1],br), t2=subb64(x[2],M[2],br), t3=subb64(x[3],M[3],br);

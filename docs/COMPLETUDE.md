@@ -28,6 +28,7 @@ Durante as séries 0.x e 1.x foram introduzidas as assinaturas determinísticas 
 ## v2.5.1
 
 - Suporte a assinatura e verificação de mensagens genéricas (BIP‑322) com comandos de CLI.
+- Funções `musig2_sign`/`musig2_verify` para combinar e validar assinaturas agregadas MuSig2 e opções `--musig2-sign`/`--musig2-verify` na CLI.
 
 ## v2.5.0
 

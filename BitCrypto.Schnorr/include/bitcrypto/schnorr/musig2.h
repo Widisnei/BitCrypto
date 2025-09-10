@@ -5,7 +5,7 @@
 #include <cstring>
 #include <bitcrypto/hash/sha256.h>
 #include <bitcrypto/msm_pippenger.h>
-#include <bitcrypto/mod_n.h>
+#include <bitcrypto/sign/sign.h>
 
 // Inspirado na implementação MuSig2 do libsecp256k1; analisamos
 // a biblioteca de referência para adaptar agregação de chaves,
@@ -83,6 +83,37 @@ static inline bool musig2_partial_aggregate(const std::vector<U256>& parts,
     }
     out = acc.to_u256_nm();
     return true;
+}
+
+// Combina agregação de chave, *nonces* e assinaturas parciais
+// produzindo a assinatura Schnorr final r||s.
+static inline bool musig2_sign(const std::vector<ECPointA>& pubs,
+                               const std::vector<ECPointA>& nonces,
+                               const std::vector<U256>& parts,
+                               ECPointA& agg_key,
+                               uint8_t sig[64],
+                               PippengerContext* ctx=nullptr){
+    if (pubs.empty() || nonces.empty() || parts.empty()) return false;
+    if (pubs.size()!=nonces.size() || pubs.size()!=parts.size()) return false;
+    ECPointA R; U256 s;
+    if(!musig2_key_aggregate(pubs, agg_key, ctx)) return false;
+    if(!musig2_nonce_aggregate(nonces, R, ctx)) return false;
+    if(!musig2_partial_aggregate(parts, s)) return false;
+    R.x.to_u256_nm().to_be32(sig);
+    s.to_be32(sig+32);
+    return true;
+}
+
+// Recalcula a assinatura final e executa a verificação BIP-340.
+static inline bool musig2_verify(const std::vector<ECPointA>& pubs,
+                                 const std::vector<ECPointA>& nonces,
+                                 const std::vector<U256>& parts,
+                                 const uint8_t msg[32],
+                                 PippengerContext* ctx=nullptr){
+    ECPointA P; uint8_t sig[64];
+    if(!musig2_sign(pubs, nonces, parts, P, sig, ctx)) return false;
+    uint8_t pubx[32]; P.x.to_u256_nm().to_be32(pubx);
+    return bitcrypto::sign::schnorr_verify_bip340(pubx, msg, sig);
 }
 
 }} // namespaces

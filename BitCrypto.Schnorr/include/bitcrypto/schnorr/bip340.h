@@ -3,8 +3,8 @@
 #include <cstdint>
 #include <cstring>
 #include <vector>
-#include "../../Hash/include/bitcrypto/hash/sha256.h"
-#include "../../EC/include/bitcrypto/ec/secp256k1.h"
+#include <bitcrypto/hash/sha256.h>
+#include <bitcrypto/ec_secp256k1.h>
 
 namespace bitcrypto { namespace schnorr {
 

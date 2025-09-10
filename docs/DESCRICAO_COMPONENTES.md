@@ -39,6 +39,7 @@ Responsável por serialização e codificação de chaves e endereços:
 
 - **ECDSA determinístico**: assina e verifica mensagens utilizando RFC 6979 (HMAC‑SHA256) para gerar *nonce* e codificação DER estrita com normalização *low‑S*.
 - **Schnorr (BIP‑340)**: implementação completa de assinaturas Schnorr com normalização `x‑only` (paridade Y) e verificação constante.  Utiliza hashing etiquetado e combinações de `Core` e `Hash`.
+- **MuSig2**: agregação determinística de chaves, *nonces* e assinaturas parciais apoiada pelo MSM Pippenger.
 
 ## Tx & PSBT (`BitCrypto.Tx`, `BitCrypto.PSBT`, `BitCrypto.PSBTv2`)
 

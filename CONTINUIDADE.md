@@ -57,23 +57,17 @@ Além das diretrizes organizacionais acima, o BitCrypto possui um conjunto de tr
 
 ### 1. Multi‑Scalar Multiplication (MSM)
 
-Nas versões atuais, a multiplicação de pontos na curva é feita via ladder constante ou via wNAF (janela 4) com pré‑cálculo de `G`.  Para operações que envolvem somas de múltiplos pontos (por exemplo, verificação de assinaturas agregadas, FROST ou MuSig), é necessário implementar um algoritmo de **multiplicação multi‑escalares** mais eficiente.  O algoritmo **Pippenger** oferece um ganho significativo em cenários com muitas combinações `sᵢ·Pᵢ` porque agrupa pontos em buckets e reduz o número de operações de adição.  O libsecp256k1 utiliza uma variante de Pippenger com janelas dinâmicas para balancear memória e desempenho【299153663448862†L391-L408】.  As tarefas incluem:
-
-- Criar uma função `msm(points[], scalars[])` em `BitCrypto.Core` que realize a soma de vários pontos ponderados utilizando Pippenger.  Comece com uma janela fixa de 4 bits e, posteriormente, implemente a seleção automática de janelas com base no número de pontos.
-- Compatibilizar a API existente para aceitar um **contexto de pré‑cálculo** opcional, armazenando múltiplos de `G` e de outros pontos recorrentes.  O wNAF requer tabelas de precomputação (por exemplo, 520 pontos para janela 4 e 4224 pontos para janela 8)【481458509835048†L575-L593】; a biblioteca de referência guarda estas tabelas em um objeto de contexto e as reutiliza em múltiplas operações, reduzindo inicialização e consumo de memória.  O BitCrypto deve oferecer uma estrutura semelhante para reutilizar precomputações.
+Concluído na versão **v2.5.0** com base na rotina de Pippenger do **libsecp256k1**.  O BitCrypto agora dispõe de uma função `msm(points[], scalars[])` em `BitCrypto.Core` que seleciona janelas adaptativas, recodifica escalares via **wNAF** e permite reutilizar tabelas em um contexto opcional de **precompute**.
 
 ### 2. Endomorfismo e Truque de Shamir
 
-O libsecp256k1 acelera a multiplicação escalar com duas técnicas adicionais: **endomorfismo** e **Shamir's trick**【299153663448862†L391-L408】.  O endomorfismo da curva secp256k1 permite decompor um escalar de 256 bits em duas componentes de 128 bits, reduzindo pela metade o custo de `s·P`.  O truque de Shamir, por sua vez, calcula simultaneamente `a·P + b·G` usando uma única passagem de wNAF e pré‑cálculos de `G`, evitando duas multiplicações independentes.  Para adotar essas técnicas:
-
-- Implementar uma rotina de decomposição de escalar por endomorfismo (`split_scalar_lambda()`), retornando dois escalares menores cujos pontos somados correspondem ao original.  Para preservar const‑time, a rotina deve evitar ramificações baseadas no segredo.
-- Estender o algoritmo de wNAF para aceitar dois multiplicandos e produzir uma sequência combinada de adições/subtrações (Shamir's trick).  Isto reduz cerca de 25 % das operações na verificação de assinaturas, conforme observado na biblioteca de referência【299153663448862†L391-L408】.
+Implementados na **v2.5.0** com referência ao **libsecp256k1**.  A decomposição de escalar `split_scalar_lambda()` reduz `s·P` a duas multiplicações menores, e o helper `shamir_trick()` combina `a·P + b·G` em uma única passagem de wNAF apoiada pelo MSM Pippenger.
 
 ### 3. Assinaturas Agregadas e FROST
 
 Com MSM, endomorfismo e Shamir prontos, pode‑se implementar assinaturas agregadas e threshold.  As propostas de BIP‑340/341 já suportam **MuSig2** (agregação de chaves e assinaturas Schnorr) e existem protocolos **FROST** para threshold Schnorr.  As tarefas incluem:
 
-- Adicionar suporte a **MuSig2**: geração de chave agregada, combinação de *nonces* e produção/validação da assinatura agregada.  Isso exigirá operações `msm()` para somar múltiplos `sᵢ·Pᵢ` durante a agregação.
+- Suporte inicial a **MuSig2**: chave agregada via coeficientes hash e rotinas para combinar *nonces* e assinaturas parciais; pendente validar a assinatura agregada final.
 - Implementar um protótipo de **FROST** para `t‑of‑n` assinaturas Schnorr.  Inclui criação de compromissos, distribuição de coeficientes de Lagrange e verificação das assinaturas parciais.  A biblioteca deve fornecer apenas a primitiva criptográfica; a orquestração multi‑party pertence a camadas superiores.
 - Criar vetores de teste e exemplos de CLI (`--musig2-sign`, `--musig2-verify`, `--frost-sign`, etc.) para demonstrar o uso das APIs.
 

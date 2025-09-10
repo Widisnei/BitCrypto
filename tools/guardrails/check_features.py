@@ -15,6 +15,9 @@ anchors = {
     "PuzzleCLI": "BitCrypto.PuzzleCLI/src/main.cpp",
     "WSCLI": "BitCrypto.WSCLI/src/main.cpp",
     "PSBTv2": "BitCrypto.PSBTv2/include/bitcrypto/psbt2/psbt_v2.h",
+    "msm_pippenger.h": "BitCrypto.Core/include/bitcrypto/msm_pippenger.h",
+    "endo_shamir.h": "BitCrypto.Core/include/bitcrypto/endo_shamir.h",
+    "musig2.h": "BitCrypto.Schnorr/include/bitcrypto/schnorr/musig2.h",
 }
 
 tokens = {
@@ -29,6 +32,9 @@ tokens = {
     "PuzzleCLI": ["--kangaroo"],
     "WSCLI": ["witness_items=", "witness_sizes=", "witness_preview=", "tap_control_block_depth="],
     "PSBTv2": ["unknown_in_kv"],
+    "msm_pippenger.h": ["wNAF", "precompute"],
+    "endo_shamir.h": ["endomorphism", "Shamir"],
+    "musig2.h": ["MuSig2"],
 }
 
 ok = True

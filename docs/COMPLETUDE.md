@@ -34,7 +34,7 @@ Durante as séries 0.x e 1.x foram introduzidas as assinaturas determinísticas 
 - Compatibilidade confirmada com Visual Studio 2022, Windows 11 x64 e CUDA 13, mantendo **zero dependências externas**.
 - Introdução da multiplicação multi‑escalar **MSM Pippenger** com janelas adaptativas, suporte a **wNAF** e contexto opcional de **precompute**.
 - Rotinas de **endomorphism** para decomposição de escalar e **Shamir's trick** para cálculo combinado `a·P + b·G`.
-- Agregação de chaves **MuSig2** utilizando coeficientes hash determinísticos e o MSM Pippenger.
+- Agregação de chaves, *nonces* e assinaturas parciais **MuSig2** utilizando coeficientes hash determinísticos e o MSM Pippenger.
 
 ## Notas adicionais
 

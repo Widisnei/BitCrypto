@@ -8,8 +8,9 @@
 #include <bitcrypto/mod_n.h>
 
 // Inspirado na implementação MuSig2 do libsecp256k1; analisamos
-// a biblioteca de referência para adaptar agregação de chaves
-// via coeficientes hash e reutilizar o motor MSM Pippenger.
+// a biblioteca de referência para adaptar agregação de chaves,
+// de *nonces* e de assinaturas parciais via coeficientes hash e
+// reutilizando o motor MSM Pippenger.
 
 namespace bitcrypto { namespace schnorr {
 
@@ -56,6 +57,32 @@ static inline bool musig2_key_aggregate(const std::vector<ECPointA>& pubs,
     }
 
     return msm_pippenger(pts, scalars, out, ctx);
+}
+
+// Soma *nonces* de forma eficiente usando o motor MSM com
+// coeficientes unitários (1).  Segue a abordagem do libsecp256k1
+// para acumular R = \Sigma R_i em validações MuSig2.
+static inline bool musig2_nonce_aggregate(const std::vector<ECPointA>& nonces,
+                                          ECPointA& out,
+                                          PippengerContext* ctx=nullptr){
+    size_t n = nonces.size();
+    if(n==0){ out = ECPointA{Fp::zero(),Fp::zero(),true}; return false; }
+    std::vector<U256> ones(n, U256::one());
+    return msm_pippenger(nonces, ones, out, ctx);
+}
+
+// Combina assinaturas parciais s_i retornando s = \Sigma s_i (mod n).
+// Esta soma modular utiliza o campo Fn para garantir redução correta.
+static inline bool musig2_partial_aggregate(const std::vector<U256>& parts,
+                                            U256& out){
+    size_t n = parts.size();
+    if(n==0){ out = U256::zero(); return false; }
+    Fn acc = Fn::zero();
+    for(const U256& s : parts){
+        acc = Fn::add(acc, Fn::from_u256_nm(s));
+    }
+    out = acc.to_u256_nm();
+    return true;
 }
 
 }} // namespaces

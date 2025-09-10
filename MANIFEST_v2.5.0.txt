@@ -1,6 +1,6 @@
 SHA256                           SIZE(bytes)  PATH
 267f7a2e19dfa9df99af774520985a0e521925293ea5b7e767ab06969d06bf91          12  BitCrypto/LICENSE.txt
-b13b248ef63e3ca1ab61ed4fd30e3a94e00be3bb30d7d5a4b8e3729f5456f16c        8960  BitCrypto/CONTINUIDADE.md
+17ad96b490b7a31a4d369236f320b9accfd70b5b2f426a8a2e177afaae4f1e46        8965  BitCrypto/CONTINUIDADE.md
 9141e2a38f0a3916407be431dc77e2b6c1e51f822845a80d0bbb3e619dff5d2a        1022  BitCrypto/LICENSE
 50448f39b6e78ad9e3d74879e01eece5858db27469e398113cd9aa9310a4623e         901  BitCrypto/CHANGELOG.md
 c4f5563aaae4fd5e39c5b13ff062b0eace50e74ff0b364197a9170f784fa4cae        1927  BitCrypto/MAINTAINERS.md
@@ -11,7 +11,7 @@ fd23c05f97f86b5f182d80ca6ac3e4a6bf65b802c66db81c59f28d6a0f739c21        1788  Bi
 a86b991b2efc6cb1faa5fd1c54e0f57af1f842cf074d26c48fb19d32af7a14f8        5799  BitCrypto/AGENTS.md
 7ee0551bde4d2193cb1e9fc1600b59f64f5f952665da97320c8484098144465d        5246  BitCrypto/MAINTENANCE.md
 7c77b1f0564137e636cf6c431201fc9fef56a7299f28c7cf684cde9edf52c48f         140  BitCrypto/CODE_OF_CONDUCT.md
-1474259626c1abe4b2e7aed65960ec67b704f521029f972e2f5431b0f1646c47        8309  BitCrypto/README.md
+2f97b3b2bbee53061a781fadeeb67fe630ad5751eaaaed45be29e89e220a5f2d        8400  BitCrypto/README.md
 d73e6fece915108b2f739d20616559bc1cf20bb8b1040e5e555bc6b4dd502a7d        1005  BitCrypto/ROADMAP.md
 3f6e83c42ca5eebb6cc0e94e2579da5857a25e93dd344ec2f86e9407a7a09ee3         198  BitCrypto/BitCrypto.Hash/CMakeLists.txt
 f55bb0e34a0d4f2d678a3f794661cc5ce7f133731adc76fd54df1b75555af481          16  BitCrypto/BitCrypto.Hash/src/unity.cpp
@@ -124,9 +124,9 @@ c07553f542ecfde288bc3bea6120ce2f255e2b7f5b974aa8e03ee68eebc32c01        4215  Bi
 68119f78d8654193d9394f6d23949a4258bd11660f205e990d7814c040663867         721  BitCrypto/BitCrypto.Bench/CMakeLists.txt
 6ede2d5278ed267b9fe77920c7f3fe40362a1ccd10a5de96f0fa27c98eceeaff        7962  BitCrypto/BitCrypto.Bench/src/bench.cpp
 6272977af2538ff204dc7d34df695eddf86ed6b94c4b9057cce288b8c5e8180f        2604  BitCrypto/BitCrypto.Schnorr/include/bitcrypto/schnorr/bip340.h
-f992b3d25cb3baa2eacfd09257d7a6c72ff4db99b6741c750bed4dde2372e14e        2184  BitCrypto/BitCrypto.Schnorr/include/bitcrypto/schnorr/musig2.h
+461a8bd3d14706a3182170f24600b9f5f73160414c1f372195f9c4da854aaa6f        3336  BitCrypto/BitCrypto.Schnorr/include/bitcrypto/schnorr/musig2.h
 66e7c7b0fb3bbf1ee3170dbbf13143fdbf5fc7e020fe07bf5e4877fba42665a4         204  BitCrypto/BitCrypto.Schnorr/tests/CMakeLists.txt
-c0a894d9e2bea5e888d25a299322267e96b344da6cab33db8a7ce53ac1f7fac3        2127  BitCrypto/BitCrypto.Schnorr/tests/tests_musig2.cpp
+584337e8d579fe228f7daa9bcbaf2326ae83918cf0fd8329628b7f0744dc86dd        3600  BitCrypto/BitCrypto.Schnorr/tests/tests_musig2.cpp
 57bb529d0bf6089d0a7f524288d60596345c4b7ac8824ea237467405933d7495         659  BitCrypto/BitCrypto.PSBT/CMakeLists.txt
 f55bb0e34a0d4f2d678a3f794661cc5ce7f133731adc76fd54df1b75555af481          16  BitCrypto/BitCrypto.PSBT/src/unity.cpp
 f98aab076ae67b0f0e9598707c4ab41f66d4b58a4ac5da3358b2ee4c7000bff8       11289  BitCrypto/BitCrypto.PSBT/include/bitcrypto/psbt/psbt.h
@@ -161,7 +161,7 @@ abe3fa8a41cdee66d9cd2c3536bf883e1f86dc1a1264fa4cda1cf17e51ddc0ce        1230  Bi
 5d156ece3e1b9c636907c6fa52d1cdea085949245abac41c5238d1820aae1ed0        2443  BitCrypto/docs/README_DOCS.md
 816df45b6b91f42d3945b969b46deac3f07a98f2a6643fa85c171567c701124c         234  BitCrypto/docs/RELEASE_NOTES_2.4.2.md
 844b10a15441592a86bcdc31bdd77631e877badcd1f456f64537a4972fa97264         663  BitCrypto/docs/GUARDRAILS_OVERVIEW.md
-fbdbd633cdbbd992581754b67385a5485de61471eb2b659e7023c4c8c9fc3011        6629  BitCrypto/docs/DESCRICAO_COMPONENTES.md
+e49b30516810db675e1a990b855ed7147b962a5ecaed4738368ddb85724fd5f9        6742  BitCrypto/docs/DESCRICAO_COMPONENTES.md
 a1095c2e87446f2994fccfe741a8876c2c36a91012f896ffd5bf2dd7c0391e67         117  BitCrypto/docs/BASE_DE_CONHECIMENTO.md
 e7bf02450980b88bc9630d59618d1ae87d3c6ec689523a1a16fa9199955478f3        8686  BitCrypto/docs/PLANO_DE_IMPLEMENTACAO.md
 e55aeea1a8448449ca6c051a63e690563d4e48f6b9760e4891ebbf13ed2ee2a4        1190  BitCrypto/docs/API_CLI_REFERENCE.md
@@ -176,8 +176,8 @@ d1d985548717128029141964e2a9af4b3de8a3f41ab4c71e13bc1ae1faaf00cc         264  Bi
 81c262cfe61aa12fe25b4cd07008212a5ee067eb3dd5712eddfe0a9ea059ebf2         698  BitCrypto/docs/ACEITE_QA_2.4.2.md
 507de93a073d314bc30a22ea8d988e3a3fe08f0f68d0c4f1483e782851c7ab6a         483  BitCrypto/docs/RELEASE_NOTES_2.5.0.md
 c6c62d5706215357a759e3067bc97078b8c9e46ea6373b4a11e3660d417c9d92       20529  BitCrypto/docs/REFERENCIAS_AVANCADAS.md
-783d634665cd88281bad3d778941dd6a5b643eb1b1d634bdaf72ae12b29eda3f        5565  BitCrypto/docs/ARQUITETURA.md
-22f8671ba8202e31f05f39d885927cd50a05d64d98015d5b1f692664c6e53cd1        3669  BitCrypto/docs/COMPLETUDE.md
+be842017dcde3a58485c8c99d9e3686bba639abf73c9114b4e5fff82ae0b878c        5598  BitCrypto/docs/ARQUITETURA.md
+ee5f592d55a0847b55facaff848e96027278f3e2da25361c543e39fb26622b07        3702  BitCrypto/docs/COMPLETUDE.md
 adf34e456836b56312efddd72cc434acbe016ac5370712960100dce732679fc3         744  BitCrypto/docs/ACEITE_QA_2.4.6.md
 98902171c420b458e0953266399f006c1e1e6031d3282207b5348ccd7ce58016        1054  BitCrypto/docs/TRANSACOES_PSBT.md
 6daf67b8ddb41d8292ba7343c051f11b57aa302e0117c590bcc9e26fde1d462a         449  BitCrypto/docs/RELEASE_NOTES_2.4.6.md

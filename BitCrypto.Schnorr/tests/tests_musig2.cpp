@@ -41,10 +41,37 @@ int main(){
     U256 ey = expected.y.to_u256_nm(), ay = agg.y.to_u256_nm();
     for(int i=0;i<4;i++){ if(ex.v[i]!=ax.v[i]||ey.v[i]!=ay.v[i]){ std::cerr<<"dif\n"; return 1; } }
 
+    // Agregação de nonces (soma simples de pontos)
+    std::vector<ECPointA> Rs{P1, P2};
+    ECPointA Ragg;
+    if(!musig2_nonce_aggregate(Rs, Ragg)){ std::cerr<<"nonce agg falhou\n"; return 1; }
+    std::vector<U256> ones{U256::one(), U256::one()};
+    ECPointA Rexp; if(!msm_pippenger(Rs, ones, Rexp)){ std::cerr<<"msm falhou\n"; return 1; }
+    U256 rx1=Ragg.x.to_u256_nm(), ry1=Ragg.y.to_u256_nm();
+    U256 rx2=Rexp.x.to_u256_nm(), ry2=Rexp.y.to_u256_nm();
+    for(int i=0;i<4;i++){ if(rx1.v[i]!=rx2.v[i]||ry1.v[i]!=ry2.v[i]){ std::cerr<<"nonce dif\n"; return 1; } }
+
+    // Caso negativo: nonces vazios
+    std::vector<ECPointA> rEmpty; ECPointA outR;
+    if(musig2_nonce_aggregate(rEmpty, outR)){ std::cerr<<"nonce vazio deveria falhar\n"; return 1; }
+    if(!outR.infinity){ std::cerr<<"nonce vazio nao infinito\n"; return 1; }
+
+    // Agregação de assinaturas parciais
+    U256 s1{{3,0,0,0}}, s2{{4,0,0,0}}, sAgg;
+    std::vector<U256> parts{s1,s2};
+    if(!musig2_partial_aggregate(parts, sAgg)){ std::cerr<<"sig agg falhou\n"; return 1; }
+    Fn sum = Fn::add(Fn::from_u256_nm(s1), Fn::from_u256_nm(s2));
+    U256 expected_s = sum.to_u256_nm();
+    for(int i=0;i<4;i++){ if(expected_s.v[i]!=sAgg.v[i]){ std::cerr<<"sig dif\n"; return 1; } }
+
     // Caso negativo: entrada vazia
     std::vector<ECPointA> vazia; ECPointA out;
     if(musig2_key_aggregate(vazia, out)){ std::cerr<<"vazio deveria falhar\n"; return 1; }
     if(!out.infinity){ std::cerr<<"resultado nao infinito\n"; return 1; }
+
+    std::vector<U256> sEmpty; U256 sOut;
+    if(musig2_partial_aggregate(sEmpty, sOut)){ std::cerr<<"sig vazio deveria falhar\n"; return 1; }
+    if(!sOut.is_zero()){ std::cerr<<"sig vazio nao zero\n"; return 1; }
     return 0;
 }
 

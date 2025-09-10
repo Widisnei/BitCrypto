@@ -10,7 +10,7 @@ BitCrypto é organizado em diversos submódulos coesos:
 - **Hash**: `SHA‑256`/`SHA‑512`, `RIPEMD‑160`, HMACs (`HMAC‑SHA256`/`HMAC‑SHA512`), `PBKDF2‑HMAC‑SHA512`, `HASH160` e `sha256_tagged` (BIP‑340/341).
 - **Encoding**: codificadores Base58/Base58Check, Bech32/Bech32m, WIF (encode/decode), tratamento de endereços **P2PKH**, **P2WPKH** e **P2TR**, bem como `detect_address_kind` e codificação/decodificação de xprv/xpub.
 - **KDF & HD**: wrapper de RNG via Windows CNG (`BCryptGenRandom`); derivação de carteiras HD conforme BIP‑32/39/44 (mnemonic → seed, CKD priv/pub, xprv/xpub).
-- **Sign**: assinaturas determinísticas **ECDSA** (RFC6979, DER estrito, low‑S) e **Schnorr** (BIP‑340) com verificação completa, além de agregação de chaves **MuSig2** usando MSM Pippenger.
+- **Sign**: assinaturas determinísticas **ECDSA** (RFC6979, DER estrito, low‑S) e **Schnorr** (BIP‑340) com verificação completa, agregação de chaves, *nonces* e assinaturas parciais **MuSig2** usando MSM Pippenger.
 - **Tx & PSBT**: serialização de transações legadas, SegWit v0 e Taproot (v1); cálculo de `txid/wtxid` e `sighash` (legacy/BIP‑143/BIP‑341) com suportes **ALL**, **NONE**, **SINGLE** e **ANYONECANPAY**; criação, parsing, assinatura e finalização de **PSBT v0/v2**, preservando pares desconhecidos e gerando saída *pretty* com sumário de witness (`witness_items/sizes/preview`).
 - **Miniscript & CLI**: análise e geração de fragmentos Miniscript (timelocks, `and`/`or`/`thresh`) com hints `after/older`; reconstrução de taptrees via `--taptree-pair-by-hash`; CLIs para geração de chaves, assinatura/validação ECDSA/Schnorr, operações de HD wallet, construção e assinatura de transações/PSBT, e resumos de witness.
 - **GPU**: aceleração via CUDA (13) para **multiplicação escalar em lote** e busca paralela de **HASH160**/P2TR (`x‑only(Q)`), com suporte a janelas wNAF e *block size* configurável.
@@ -95,7 +95,7 @@ A partir da série 2.x a biblioteca expandiu-se para além de assinaturas e tra
 - **2.3.0** – Implementação completa do campo primo secp256k1 (`Fe`) com redução pseudo‑Mersenne e operações `add/sub/mul/sqr/inv/sqrt`; adição de coordenadas Jacobianas e verificação **Schnorr** em `SchnorrCLI`.
 - **2.4.2** – Consolidação do overlay 2.3.1 (Fe/EC/Schnorr/Hash) e atualização de tokens de guard‑rails para PSBT/Miniscript.
 - **2.4.6** – **WSCLI** ganhou sumário de witness (`witness_items`, `witness_sizes`, `tap_control_block_depth`); **MSCLI** adicionou `--taptree-pair-by-hash` para reconstrução determinística de Taproot; **PSBT v2** passou a preservar pares *unknown K/V*.
-- **2.5.0** – Otimização da multiplicação `s·G` com **wNAF (janela 4)** e pré‑cálculo de G; unrolling moderado de `SHA‑256` (8×); expansão de **PSBT pretty** com `witness_preview=[…]`; tokens de guard‑rails adicionais para EC e witness preview.
+- **2.5.0** – Otimização da multiplicação `s·G` com **wNAF (janela 4)** e pré‑cálculo de G; unrolling moderado de `SHA‑256` (8×); expansão de **PSBT pretty** com `witness_preview=[…]`; tokens de guard‑rails adicionais para EC e witness preview; agregação de chaves, *nonces* e assinaturas parciais **MuSig2**.
 
 ## Documentação
 

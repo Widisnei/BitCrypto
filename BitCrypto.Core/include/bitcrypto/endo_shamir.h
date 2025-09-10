@@ -4,6 +4,9 @@
 #include "msm_pippenger.h" // reutiliza wNAF
 #include "mod_n.h"
 
+// Baseado nas técnicas de endomorfismo e Shamir presentes no
+// libsecp256k1; estudamos a biblioteca de referência para obter as
+// constantes e a estratégia de decomposição de escalar.
 namespace bitcrypto {
 
 // Constantes do endomorphism lambda

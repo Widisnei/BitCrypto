@@ -3,6 +3,10 @@
 #include <cstdlib>
 #include "ec_secp256k1.h"
 
+// Implementação inspirada na rotina de MSM Pippenger utilizada pelo
+// libsecp256k1; estudamos o código de referência para adaptar janelas
+// dinâmicas e recodificação wNAF com pré-cálculo opcional.
+
 namespace bitcrypto {
 
 // Contexto opcional de pré-cálculo para MSM Pippenger

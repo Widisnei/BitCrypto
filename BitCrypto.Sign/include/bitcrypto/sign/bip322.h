@@ -7,7 +7,7 @@
 // https://github.com/bitcoin/bips/blob/master/bip-0322.mediawiki
 namespace bitcrypto { namespace sign {
 
-// Assinatura Schnorr (r,s) utilizada pelo BIP-322
+// Assinatura (r,s) utilizada pelo BIP-322 (ECDSA deterministic)
 struct Signature {
     uint8_t r[32];
     uint8_t s[32];

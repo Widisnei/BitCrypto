@@ -101,21 +101,46 @@ static inline bool musig2_sign(const std::vector<ECPointA>& pubs,
     if(!musig2_key_aggregate(pubs, agg_key, ctx)) return false;
     if(!musig2_nonce_aggregate(nonces, R, ctx)) return false;
     if(!musig2_partial_aggregate(parts, s)) return false;
-    R.x.to_u256_nm().to_be32(sig);
+    // Normaliza R para y par, ajustando s se necessário
+    uint8_t rx[32]; bool rneg=false; ECPointA Re = encoding::normalize_even_y(R, rx, rneg);
+    if(rneg){
+        Fn sf = Fn::sub(Fn::zero(), Fn::from_u256_nm(s));
+        s = sf.to_u256_nm();
+    }
+    Re.x.to_u256_nm().to_be32(sig);
     s.to_be32(sig+32);
     return true;
 }
 
-// Recalcula a assinatura final e executa a verificação BIP-340.
+// Recalcula o desafio e verifica a equação do grupo sG = R + eP.
 static inline bool musig2_verify(const std::vector<ECPointA>& pubs,
                                  const std::vector<ECPointA>& nonces,
                                  const std::vector<U256>& parts,
                                  const uint8_t msg[32],
                                  PippengerContext* ctx=nullptr){
-    ECPointA P; uint8_t sig[64];
-    if(!musig2_sign(pubs, nonces, parts, P, sig, ctx)) return false;
-    uint8_t px[32]; P.x.to_u256_nm().to_be32(px);
-    return sign::schnorr_verify_bip340(px, msg, sig);
+    if (pubs.empty() || nonces.empty() || parts.empty()) return false;
+    if (pubs.size()!=nonces.size() || pubs.size()!=parts.size()) return false;
+    ECPointA P,R;
+    if(!musig2_key_aggregate(pubs, P, ctx)) return false;
+    if(!musig2_nonce_aggregate(nonces, R, ctx)) return false;
+    U256 s; if(!musig2_partial_aggregate(parts, s)) return false;
+    uint8_t rx[32]; bool rneg=false; R = encoding::normalize_even_y(R, rx, rneg);
+    if(rneg){ Fn sf = Fn::sub(Fn::zero(), Fn::from_u256_nm(s)); s = sf.to_u256_nm(); }
+    uint8_t px[32]; bool pneg=false; P = encoding::normalize_even_y(P, px, pneg); if(pneg) return false;
+    uint8_t chal[96]; std::memcpy(chal, rx, 32); std::memcpy(chal+32, px, 32); std::memcpy(chal+64, msg, 32);
+    uint8_t e32[32]; hash::sha256_tagged("BIP0340/challenge", chal, sizeof(chal), e32);
+    U256 e = U256::from_be32(e32); Secp256k1::scalar_mod_n(e);
+    ECPointJ sG = Secp256k1::scalar_mul(s, Secp256k1::G());
+    ECPointJ eP = Secp256k1::scalar_mul(e, P);
+    ECPointJ rhs = Secp256k1::add(Secp256k1::to_jacobian(R), eP);
+    if (Secp256k1::is_infinity(sG) || Secp256k1::is_infinity(rhs)) return false;
+    ECPointA sGa = Secp256k1::to_affine(sG);
+    ECPointA rhsa = Secp256k1::to_affine(rhs);
+    if (sGa.infinity || rhsa.infinity) return false;
+    return (sGa.x.v[0]==rhsa.x.v[0] && sGa.x.v[1]==rhsa.x.v[1] &&
+            sGa.x.v[2]==rhsa.x.v[2] && sGa.x.v[3]==rhsa.x.v[3] &&
+            sGa.y.v[0]==rhsa.y.v[0] && sGa.y.v[1]==rhsa.y.v[1] &&
+            sGa.y.v[2]==rhsa.y.v[2] && sGa.y.v[3]==rhsa.y.v[3]);
 }
 
 }} // namespaces

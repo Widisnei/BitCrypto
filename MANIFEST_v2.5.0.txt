@@ -11,7 +11,7 @@ ca3ec188412d31e9961dbf673d49034472beee44991fddb784aba7310b722c1c         333  Bi
 267f7a2e19dfa9df99af774520985a0e521925293ea5b7e767ab06969d06bf91          12  BitCrypto/LICENSE.txt
 a86b991b2efc6cb1faa5fd1c54e0f57af1f842cf074d26c48fb19d32af7a14f8        5799  BitCrypto/AGENTS.md
 fd23c05f97f86b5f182d80ca6ac3e4a6bf65b802c66db81c59f28d6a0f739c21        1788  BitCrypto/CONTRIBUTING.md
-d73e6fece915108b2f739d20616559bc1cf20bb8b1040e5e555bc6b4dd502a7d        1005  BitCrypto/ROADMAP.md
+731c4989aa74c03d3096dfa263f509e00193b278723fcdb851e9f913a4f9858f         725  BitCrypto/ROADMAP.md
 c0c9653c0e7df798e67f2edce2dcf788d34172c032c21ce976a94d8bbad3b130        8792  BitCrypto/README.md
 50feba192f61fd43231850c65e79ad9541478481872fb8d65ff08b57b3d7cdb8         503  BitCrypto/BitCrypto.PSBT2.Tests/CMakeLists.txt
 bc8bc95f0e835b1d7be738aac1f7cb047c430ff76cd49cc0f66e4cd41dcb1688        5907  BitCrypto/BitCrypto.PSBT2.Tests/src/tests_psbt2.cpp

@@ -14,7 +14,3 @@
 ### 3.0.0 — GPU (opcional)
 - Kernels EC e *Kangaroo* mantendo Regra 3 (duplicação apenas CPU/GPU).
 
- Próximos marcos
-- **2.5.0**: wNAF (janela 4/5) + precompute de G; unrolling moderado SHA‑256; polimento PSBT pretty.
-- **2.6.0**: Miniscript avançado (timelocks, and/or/thresh), Taproot control block e validações.
-- **3.0.0**: módulo GPU (EC kernels) preservando Regra 3.

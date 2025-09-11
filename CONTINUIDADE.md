@@ -61,7 +61,7 @@ Concluído na versão **v2.5.0** com base na rotina de Pippenger do **libsecp256
 
 ### 2. Endomorfismo e Truque de Shamir
 
-Implementados na **v2.5.0** com referência ao **libsecp256k1**.  A decomposição de escalar `split_scalar_lambda()` reduz `s·P` a duas multiplicações menores, e o helper `shamir_trick()` combina `a·P + b·G` em uma única passagem de wNAF apoiada pelo MSM Pippenger.
+Implementados na **v2.5.0** com referência ao **libsecp256k1**.  A decomposição de escalar `split_scalar_lambda()` reduz `s·P` a duas multiplicações menores **em tempo constante**, e o helper `shamir_trick()` combina `a·P + b·G` em uma única passagem de wNAF apoiada pelo MSM Pippenger (entrada pública, não const-time).
 
 ### 3. Assinaturas Agregadas e FROST
 

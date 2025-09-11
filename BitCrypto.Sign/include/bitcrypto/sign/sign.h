@@ -59,6 +59,7 @@ inline bool ecdsa_sign(const uint8_t priv32[32], const uint8_t hash32[32], ECDSA
     U256 e = U256::from_be32(hash32); reduce_mod_n(e);
     uint8_t k32[32]; rfc6979_nonce(priv32, hash32, k32);
     U256 k = U256::from_be32(k32); Secp256k1::scalar_mod_n(k); if (k.is_zero()) return false;
+    secure_memzero(k32, sizeof(k32));
     ECPointJ Rj = Secp256k1::scalar_mul(k, Secp256k1::G());
     ECPointA Ra = Secp256k1::to_affine(Rj);
     U256 rx = Ra.x.to_u256_nm(); reduce_mod_n(rx); if (rx.is_zero()) return false; rx.to_be32(sig.r);

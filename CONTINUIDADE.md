@@ -84,10 +84,14 @@ Cada novo algoritmo deve vir acompanhado de testes extensivos: vetores positivos
 
 ### 6. Referências e Observações
 
-- Paul Miller discute o algoritmo **wNAF** e seus pré‑cálculos, destacando que o wNAF usa adição e subtração para reduzir o número de pontos precomputados e que a janela 4 requer 520 pontos de precomputação, enquanto uma janela 8 requer 4224 pontos【481458509835048†L575-L593】.
-- Jared Tobin observa que o wNAF exige um **contexto** contendo muitas multiplicações de `G`, o que complica a API mas resulta em grandes ganhos de desempenho【411223492370334†L14-L24】.  Este contexto deve ser explicitamente inicializado e passado para as operações quando necessário.
-- A documentação do libsecp256k1 lista técnicas de otimização, incluindo uso de wNAF com janelas maiores para `G`, Shamir's trick, endomorfismo para dividir o escalar e tabelas de pré‑cálculo com movimento condicional para acesso constante【299153663448862†L391-L408】.  Estas estratégias devem inspirar a evolução do BitCrypto, respeitando as restrições de não‑dependência e const‑time.
+ - Paul Miller discute o algoritmo **wNAF** e seus pré‑cálculos, destacando que o wNAF usa adição e subtração para reduzir o número de pontos precomputados e que a janela 4 requer 520 pontos de precomputação, enquanto uma janela 8 requer 4224 pontos[^1].
+ - Jared Tobin observa que o wNAF exige um **contexto** contendo muitas multiplicações de `G`, o que complica a API mas resulta em grandes ganhos de desempenho[^2].  Este contexto deve ser explicitamente inicializado e passado para as operações quando necessário.
+ - A documentação do libsecp256k1 lista técnicas de otimização, incluindo uso de wNAF com janelas maiores para `G`, Shamir's trick, endomorfismo para dividir o escalar e tabelas de pré‑cálculo com movimento condicional para acesso constante[^3].  Estas estratégias devem inspirar a evolução do BitCrypto, respeitando as restrições de não‑dependência e const‑time.
 
 Integrando as tarefas acima com os princípios de design descritos anteriormente, o BitCrypto avançará em direção a uma biblioteca completa, performática e alinhada aos padrões mais modernos do ecossistema Bitcoin.
 
 Seguindo estas orientações e realizando os trabalhos técnicos planejados, contribuiremos para que o BitCrypto continue evoluindo de forma ordenada, coesa e sustentável, mesmo com a entrada de novos colaboradores e a saída de membros antigos.
+
+[^1]: Paul Miller, "Pippenger and wNAF for secp256k1". Disponível em: <https://paulmillr.com/posts/noble-secp256k1-pippenger-wnaf/>.
+[^2]: Jared Tobin, "wNAF and Context". Disponível em: <https://blog.jtobin.ca/wnaf-ecdsa>.
+[^3]: Equipe libsecp256k1, "libsecp256k1 README". Disponível em: <https://github.com/bitcoin-core/secp256k1#readme>.

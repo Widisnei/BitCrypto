@@ -127,8 +127,7 @@ static inline bool msm_pippenger(const std::vector<ECPointA>& points,
             R = Secp256k1::add(R, acc);
         }
         if (!Secp256k1::is_infinity(buckets[0])){
-            acc = Secp256k1::add(acc, buckets[0]);
-            R = Secp256k1::add(R, acc);
+            R = Secp256k1::add(R, buckets[0]);
         }
     }
 

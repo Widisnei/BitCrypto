@@ -20,35 +20,38 @@ struct Fp{
         uint64_t br=0; uint64_t t0=subb64(x[0],P[0],br), t1=subb64(x[1],P[1],br), t2=subb64(x[2],P[2],br), t3=subb64(x[3],P[3],br);
         uint64_t m=0-(uint64_t)(1-br); x[0]=(x[0]&~m)|(t0&m); x[1]=(x[1]&~m)|(t1&m); x[2]=(x[2]&~m)|(t2&m); x[3]=(x[3]&~m)|(t3&m);
     }
-    // Multiplicação de Montgomery: calcula (a * b * R^{-1}) mod p
-    // Mantém algoritmo "schoolbook" em duas fases com propagação
-    // explícita de carry para evitar estouro de pilha.
+    // Multiplicação de Montgomery: (a * b * R^{-1}) mod p
+    // Implementação baseada em acumuladores de 128 bits inspirada
+    // nas rotinas geradas pelo [Fiat‑Crypto](https://github.com/mit-plv/fiat-crypto).
+    // A abordagem com `unsigned __int128` simplifica a propagação de
+    // carry e evita o estouro de pilha observado na versão anterior.
     BITCRYPTO_HD inline static void mont_mul(const uint64_t a[4], const uint64_t b[4], uint64_t r[4]){
-        // Acumulador com 1 limb extra para capturar o último carry
-        uint64_t T[9]={0,0,0,0,0,0,0,0,0};
+        unsigned __int128 t[9]={0,0,0,0,0,0,0,0,0};
         // Fase 1: multiplicação clássica a*b
         for(int i=0;i<4;i++){
-            uint64_t c=0;
-            T[i+0]=mac64(a[i],b[0],T[i+0],c);
-            T[i+1]=mac64(a[i],b[1],T[i+1],c);
-            T[i+2]=mac64(a[i],b[2],T[i+2],c);
-            T[i+3]=mac64(a[i],b[3],T[i+3],c);
-            uint64_t before=T[i+4]; T[i+4]+=c; uint64_t cc=(T[i+4]<before); int k=i+5;
-            while(cc && k<9){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
+            unsigned __int128 carry=0;
+            for(int j=0;j<4;j++){
+                unsigned __int128 uv = t[i+j] + (unsigned __int128)a[j]*b[i] + carry;
+                t[i+j] = (uint64_t)uv;
+                carry   = uv>>64;
+            }
+            t[i+4] += carry;
         }
         // Fase 2: redução de Montgomery
         for(int i=0;i<4;i++){
-            uint64_t m = T[i] * N0_PRIME;
-            uint64_t c=0;
-            T[i+0]=mac64(m,P[0],T[i+0],c);
-            T[i+1]=mac64(m,P[1],T[i+1],c);
-            T[i+2]=mac64(m,P[2],T[i+2],c);
-            T[i+3]=mac64(m,P[3],T[i+3],c);
-            uint64_t before=T[i+4]; T[i+4]+=c; uint64_t cc=(T[i+4]<before); int k=i+5;
-            while(cc && k<9){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
-            T[i]=0; // limpa o limb já reduzido
+            uint64_t m = (uint64_t)t[i] * N0_PRIME;
+            unsigned __int128 carry=0;
+            for(int j=0;j<4;j++){
+                unsigned __int128 uv = t[i+j] + (unsigned __int128)m*P[j] + carry;
+                t[i+j] = (uint64_t)uv;
+                carry  = uv>>64;
+            }
+            int k=i+4;
+            unsigned __int128 uv = t[k] + carry;
+            t[k] = (uint64_t)uv; carry = uv>>64; k++;
+            while(carry && k<9){ uv = t[k] + carry; t[k]=(uint64_t)uv; carry=uv>>64; k++; }
         }
-        r[0]=T[4]; r[1]=T[5]; r[2]=T[6]; r[3]=T[7];
+        r[0]=(uint64_t)t[4]; r[1]=(uint64_t)t[5]; r[2]=(uint64_t)t[6]; r[3]=(uint64_t)t[7];
         sub_p_if_ge(r);
     }
     BITCRYPTO_HD inline static Fp from_u256_nm(const U256& a){ Fp r; mont_mul(a.v, RR, r.v); return r; }

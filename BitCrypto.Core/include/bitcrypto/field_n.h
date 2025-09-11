@@ -27,30 +27,33 @@ struct Fn{
         return r2;
     }
     BITCRYPTO_HD inline static void mont_mul(const uint64_t a[4], const uint64_t b[4], uint64_t r[4]){
-        uint64_t T[9]={0,0,0,0,0,0,0,0,0};
-        // Fase 1: multiplicação clássica
+        unsigned __int128 t[9]={0,0,0,0,0,0,0,0,0};
+        // Fase 1: multiplicação clássica a*b
         for(int i=0;i<4;i++){
-            uint64_t c=0;
-            T[i+0]=mac64(a[i],b[0],T[i+0],c);
-            T[i+1]=mac64(a[i],b[1],T[i+1],c);
-            T[i+2]=mac64(a[i],b[2],T[i+2],c);
-            T[i+3]=mac64(a[i],b[3],T[i+3],c);
-            uint64_t before=T[i+4]; T[i+4]+=c; uint64_t cc=(T[i+4]<before); int k=i+5;
-            while(cc && k<9){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
+            unsigned __int128 carry=0;
+            for(int j=0;j<4;j++){
+                unsigned __int128 uv = t[i+j] + (unsigned __int128)a[j]*b[i] + carry;
+                t[i+j] = (uint64_t)uv;
+                carry   = uv>>64;
+            }
+            t[i+4] += carry;
         }
         // Fase 2: redução de Montgomery
         for(int i=0;i<4;i++){
-            uint64_t m = T[i] * N0_PRIME;
-            uint64_t c=0;
-            T[i+0]=mac64(m,N[0],T[i+0],c);
-            T[i+1]=mac64(m,N[1],T[i+1],c);
-            T[i+2]=mac64(m,N[2],T[i+2],c);
-            T[i+3]=mac64(m,N[3],T[i+3],c);
-            uint64_t before=T[i+4]; T[i+4]+=c; uint64_t cc=(T[i+4]<before); int k=i+5;
-            while(cc && k<9){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
-            T[i]=0; // limpa o limb já reduzido
+            uint64_t m = (uint64_t)t[i] * N0_PRIME;
+            unsigned __int128 carry=0;
+            for(int j=0;j<4;j++){
+                unsigned __int128 uv = t[i+j] + (unsigned __int128)m*N[j] + carry;
+                t[i+j] = (uint64_t)uv;
+                carry  = uv>>64;
+            }
+            int k=i+4;
+            unsigned __int128 uv = t[k] + carry;
+            t[k] = (uint64_t)uv; carry = uv>>64; k++;
+            while(carry && k<9){ uv = t[k] + carry; t[k]=(uint64_t)uv; carry=uv>>64; k++; }
         }
-        r[0]=T[4]; r[1]=T[5]; r[2]=T[6]; r[3]=T[7]; sub_n_if_ge(r);
+        r[0]=(uint64_t)t[4]; r[1]=(uint64_t)t[5]; r[2]=(uint64_t)t[6]; r[3]=(uint64_t)t[7];
+        sub_n_if_ge(r);
     }
     BITCRYPTO_HD inline static Fn from_u256_nm(const U256& a){ Fn r; mont_mul(a.v, RR, r.v); return r; }
     BITCRYPTO_HD inline U256 to_u256_nm() const { uint64_t one[4]={1,0,0,0}; uint64_t out[4]; mont_mul(v, one, out); return U256{out[0],out[1],out[2],out[3]}; }

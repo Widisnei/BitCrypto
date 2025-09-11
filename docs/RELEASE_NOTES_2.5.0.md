@@ -6,3 +6,4 @@
 - **Guard‑rails**: adicionados tokens para EC (wNAF/precompute) e preview.
 - **Compatibilidade**: VS2022/Win11 x64/CUDA 13; sem dependências externas.
 - **MuSig2**: funções `musig2_sign`/`musig2_verify` e suporte `--musig2-sign`/`--musig2-verify` na CLI.
+- **Core**: rotinas de Montgomery reescritas sem `__int128`, garantindo compilação no Visual Studio.

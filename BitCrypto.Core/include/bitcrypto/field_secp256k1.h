@@ -51,8 +51,17 @@ struct Fp{
             t[k] = (uint64_t)uv; carry = uv>>64; k++;
             while(carry && k<9){ uv = t[k] + carry; t[k]=(uint64_t)uv; carry=uv>>64; k++; }
         }
-        r[0]=(uint64_t)t[4]; r[1]=(uint64_t)t[5]; r[2]=(uint64_t)t[6]; r[3]=(uint64_t)t[7];
-        sub_p_if_ge(r);
+        uint64_t res[5]={ (uint64_t)t[4], (uint64_t)t[5], (uint64_t)t[6], (uint64_t)t[7], (uint64_t)t[8] };
+        // Propaga redução final caso o resultado esteja acima do módulo
+        while(res[4] || res[3]>P[3] || (res[3]==P[3] && (res[2]>P[2] || (res[2]==P[2] && (res[1]>P[1] || (res[1]==P[1] && res[0]>=P[0])))))){
+            uint64_t br=0;
+            res[0]=subb64(res[0],P[0],br);
+            res[1]=subb64(res[1],P[1],br);
+            res[2]=subb64(res[2],P[2],br);
+            res[3]=subb64(res[3],P[3],br);
+            res[4]=subb64(res[4],0,br);
+        }
+        r[0]=res[0]; r[1]=res[1]; r[2]=res[2]; r[3]=res[3];
     }
     BITCRYPTO_HD inline static Fp from_u256_nm(const U256& a){ Fp r; mont_mul(a.v, RR, r.v); return r; }
     BITCRYPTO_HD inline U256 to_u256_nm() const { uint64_t out[4]; mont_mul(v, ONE_NM, out); return U256{{out[0],out[1],out[2],out[3]}}; }

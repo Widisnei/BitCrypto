@@ -52,8 +52,16 @@ struct Fn{
             t[k] = (uint64_t)uv; carry = uv>>64; k++;
             while(carry && k<9){ uv = t[k] + carry; t[k]=(uint64_t)uv; carry=uv>>64; k++; }
         }
-        r[0]=(uint64_t)t[4]; r[1]=(uint64_t)t[5]; r[2]=(uint64_t)t[6]; r[3]=(uint64_t)t[7];
-        sub_n_if_ge(r);
+        uint64_t res[5]={ (uint64_t)t[4], (uint64_t)t[5], (uint64_t)t[6], (uint64_t)t[7], (uint64_t)t[8] };
+        while(res[4] || res[3]>N[3] || (res[3]==N[3] && (res[2]>N[2] || (res[2]==N[2] && (res[1]>N[1] || (res[1]==N[1] && res[0]>=N[0])))))){
+            uint64_t br=0;
+            res[0]=subb64(res[0],N[0],br);
+            res[1]=subb64(res[1],N[1],br);
+            res[2]=subb64(res[2],N[2],br);
+            res[3]=subb64(res[3],N[3],br);
+            res[4]=subb64(res[4],0,br);
+        }
+        r[0]=res[0]; r[1]=res[1]; r[2]=res[2]; r[3]=res[3];
     }
     BITCRYPTO_HD inline static Fn from_u256_nm(const U256& a){ Fn r; mont_mul(a.v, RR, r.v); return r; }
     BITCRYPTO_HD inline U256 to_u256_nm() const { uint64_t one[4]={1,0,0,0}; uint64_t out[4]; mont_mul(v, one, out); return U256{out[0],out[1],out[2],out[3]}; }

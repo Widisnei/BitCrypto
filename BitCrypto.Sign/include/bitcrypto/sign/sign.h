@@ -10,6 +10,7 @@
 #include <bitcrypto/hash/tagged_hash.h>
 #include <bitcrypto/encoding/der.h>
 #include <bitcrypto/encoding/taproot.h>
+#include <bitcrypto/utils/safe.h>
 
 namespace bitcrypto { namespace sign {
 inline void reduce_mod_n(U256& a){ Secp256k1::scalar_mod_n(a); }
@@ -28,13 +29,26 @@ inline void rfc6979_nonce(const uint8_t priv32[32], const uint8_t hash32[32], ui
     std::memcpy(tmp, V, 32); tmp[32]=0x01; std::memcpy(tmp+33, bx, 33+32);
     hmac_sha256(K, 32, tmp, 33+33+32, K);
     hmac_sha256(K, 32, V, 32, V);
+    uint8_t sep[1+33+32];
     while (true){
         hmac_sha256(K, 32, V, 32, V);
         std::memcpy(out_k, V, 32);
-        U256 k = U256::from_be32(out_k); if (!k.is_zero()){ U256 t=k; Secp256k1::scalar_mod_n(t); if (!t.is_zero()) return; }
-        uint8_t sep[1+33+32]; sep[0]=0x00; std::memcpy(sep+1, bx, 33+32);
-        hmac_sha256(K, 32, V, 32, K); hmac_sha256(K, 32, sep, sizeof(sep), K); hmac_sha256(K, 32, V, 32, V);
+        U256 k = U256::from_be32(out_k);
+        if (!k.is_zero()){
+            U256 t=k;
+            Secp256k1::scalar_mod_n(t);
+            if (!t.is_zero()) break;
+        }
+        sep[0]=0x00; std::memcpy(sep+1, bx, 33+32);
+        hmac_sha256(K, 32, V, 32, K);
+        hmac_sha256(K, 32, sep, sizeof(sep), K);
+        hmac_sha256(K, 32, V, 32, V);
     }
+    secure_memzero(V, sizeof(V));
+    secure_memzero(K, sizeof(K));
+    secure_memzero(bx, sizeof(bx));
+    secure_memzero(tmp, sizeof(tmp));
+    secure_memzero(sep, sizeof(sep));
 }
 
 struct ECDSA_Signature { uint8_t r[32]; uint8_t s[32]; };

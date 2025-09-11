@@ -170,7 +170,7 @@ f55bb0e34a0d4f2d678a3f794661cc5ce7f133731adc76fd54df1b75555af481          16  Bi
 5f33c0d497ef6788f389c884f925fd712ce11a8d5ca516bd83a8ad3d94eb973e        4957  BitCrypto/BitCrypto.Sign/include/bitcrypto/sign/scalar_n.h
 f9c8121680a6a2f2964ef8c45e242e8191cd1da618fe549ee3f5f55b8545630a        2194  BitCrypto/BitCrypto.Sign/include/bitcrypto/sign/der.h
 fc8ec875e343fc13a13f671618f541ae2b354293232b488e95c4501aba276791        5751  BitCrypto/BitCrypto.Sign/include/bitcrypto/sign/schnorr.h
-fb6c2da638011eacb66902348cedc6e4a31dfbf6a54a9200dee2dca63b391e75        9676  BitCrypto/BitCrypto.Sign/include/bitcrypto/sign/sign.h
+3eb650055c583b2daee25dffce8ad428777df3ab0fb7e73ba49cd736f11d704e        9961  BitCrypto/BitCrypto.Sign/include/bitcrypto/sign/sign.h
 64e1cb225d352ab2b89471972574617c4bdc0cda350eafb9d464bd359a69ebf0        1504  BitCrypto/BitCrypto.Sign/include/bitcrypto/sign/rfc6979.h
 68ecf6830ece5aa7121c3fdbaf540597d2d55d6517f213342868bf373dd38347        5168  BitCrypto/BitCrypto.Sign/include/bitcrypto/sign/ecdsa.h
 3f6e83c42ca5eebb6cc0e94e2579da5857a25e93dd344ec2f86e9407a7a09ee3         198  BitCrypto/BitCrypto.Hash/CMakeLists.txt

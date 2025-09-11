@@ -99,15 +99,19 @@ static inline bool musig2_sign(const std::vector<ECPointA>& pubs,
     if (pubs.size()!=nonces.size() || pubs.size()!=parts.size()) return false;
     ECPointA R; U256 s;
     if(!musig2_key_aggregate(pubs, agg_key, ctx)) return false;
+    // Garante chave agregada com coordenada Y par
+    {
+        uint8_t px[32]; bool neg=false; agg_key = encoding::normalize_even_y(agg_key, px, neg);
+    }
     if(!musig2_nonce_aggregate(nonces, R, ctx)) return false;
     if(!musig2_partial_aggregate(parts, s)) return false;
-    // Normaliza R para y par, ajustando s se necessário
-    uint8_t rx[32]; bool rneg=false; ECPointA Re = encoding::normalize_even_y(R, rx, rneg);
+    // Normaliza R para Y par e ajusta s se necessário
+    uint8_t rx[32]; bool rneg=false; R = encoding::normalize_even_y(R, rx, rneg);
     if(rneg){
         Fn sf = Fn::sub(Fn::zero(), Fn::from_u256_nm(s));
         s = sf.to_u256_nm();
     }
-    Re.x.to_u256_nm().to_be32(sig);
+    R.x.to_u256_nm().to_be32(sig);
     s.to_be32(sig+32);
     return true;
 }

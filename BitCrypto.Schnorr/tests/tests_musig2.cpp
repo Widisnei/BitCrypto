@@ -34,6 +34,12 @@ int main(){
     std::vector<ECPointA> pubs1{PubEven}; std::vector<ECPointA> nonces1{R}; std::vector<U256> parts1{s};
     ECPointA Pcalc; uint8_t sig_out[64];
     if(!musig2_sign(pubs1, nonces1, parts1, Pcalc, sig_out)){ std::cerr<<"musig2_sign falhou\n"; return 1; }
+    if (Pcalc.x.v[0]!=PubEven.x.v[0] || Pcalc.x.v[1]!=PubEven.x.v[1] ||
+        Pcalc.x.v[2]!=PubEven.x.v[2] || Pcalc.x.v[3]!=PubEven.x.v[3] ||
+        Pcalc.y.v[0]!=PubEven.y.v[0] || Pcalc.y.v[1]!=PubEven.y.v[1] ||
+        Pcalc.y.v[2]!=PubEven.y.v[2] || Pcalc.y.v[3]!=PubEven.y.v[3]){
+        std::cerr<<"agg key divergente\n"; return 1;
+    }
     for(int i=0;i<64;i++){ if(sig_out[i]!=sig_ref[i]){ std::cerr<<"sig dif\n"; return 1; } }
     if(!musig2_verify(pubs1, nonces1, parts1, msg)){ std::cerr<<"musig2_verify falhou\n"; return 1; }
     parts1[0].v[0]^=1ULL; // negativo

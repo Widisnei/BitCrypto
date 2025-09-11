@@ -65,8 +65,9 @@ int main(){
     // shamir_trick negativo: ponto inválido
     {
         ECPointA P{Fp::zero(),Fp::zero(),false}; U256 a{{1,0,0,0}}, b{{1,0,0,0}}; ECPointA R;
-        bool ok = shamir_trick(P,a,b,R);
-        if(ok && Secp256k1::is_on_curve(R)){ std::cerr<<"shamir aceitou ponto invalido\n"; return 1; }
+        if(shamir_trick(P,a,b,R)){
+            std::cerr<<"shamir aceitou ponto invalido\n"; return 1;
+        }
     }
     std::cout<<"OK\n"; return 0;
 }

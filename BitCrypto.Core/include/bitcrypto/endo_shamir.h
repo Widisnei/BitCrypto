@@ -27,12 +27,10 @@ static inline void mul256(const U256& a,const U256& b,uint64_t r[8]){
             r[i+j]=(uint64_t)sum;
             carry=sum>>64;
         }
-        int k=i+4;
-        while(carry){
+        for(int k=i+4;k<8;k++){
             unsigned __int128 sum=(unsigned __int128)r[k]+carry;
             r[k]=(uint64_t)sum;
             carry=sum>>64;
-            k++;
         }
     }
 }
@@ -42,7 +40,12 @@ static inline void mul_shift_round(U256& out,const U256& a,const U256& b,unsigne
     uint64_t l[8]; mul256(a,b,l);
     unsigned idx=(shift-1)>>6; unsigned bit=(shift-1)&63;
     unsigned __int128 t=(unsigned __int128)l[idx] + (1ULL<<bit);
-    l[idx]=(uint64_t)t; uint64_t c=t>>64; int k=idx+1; while(c && k<8){ unsigned __int128 t2=(unsigned __int128)l[k]+c; l[k]=(uint64_t)t2; c=t2>>64; k++; }
+    l[idx]=(uint64_t)t; uint64_t c=t>>64;
+    for(int k=idx+1;k<8;k++){
+        unsigned __int128 t2=(unsigned __int128)l[k]+c;
+        l[k]=(uint64_t)t2;
+        c=t2>>64;
+    }
     unsigned shiftlimbs=shift>>6; unsigned shiftlow=shift&63; unsigned shifthigh=64-shiftlow;
     uint64_t r0=0,r1=0,r2=0,r3=0;
     if(shiftlow==0){
@@ -60,7 +63,8 @@ static inline void mul_shift_round(U256& out,const U256& a,const U256& b,unsigne
     out = U256{{r0,r1,r2,r3}};
 }
 
-// Decomposição de escalar via endomorfismo lambda
+// Decomposição de escalar via endomorfismo lambda.
+// Esta rotina é const-time e pode ser usada com escalares secretos.
 static inline void split_scalar_lambda(const U256& k,U256& r1,U256& r2){
     U256 c1u,c2u; mul_shift_round(c1u,k,G1,384); mul_shift_round(c2u,k,G2,384);
     Fn c1 = Fn::from_u256_nm(c1u); Fn c2 = Fn::from_u256_nm(c2u);
@@ -71,7 +75,8 @@ static inline void split_scalar_lambda(const U256& k,U256& r1,U256& r2){
     r1 = r1f.to_u256_nm(); r2 = r2f.to_u256_nm();
 }
 
-// Shamir's trick: calcula a*P + b*G reutilizando MSM Pippenger
+// Shamir's trick: calcula a*P + b*G reutilizando MSM Pippenger.
+// Usa wNAF e não é const-time; restrito a escalares públicos.
 static inline bool shamir_trick(const ECPointA& P,const U256& a,const U256& b,ECPointA& out){
     if(P.infinity || !Secp256k1::is_on_curve(P)){
         out = ECPointA{Fp::zero(),Fp::zero(),true};

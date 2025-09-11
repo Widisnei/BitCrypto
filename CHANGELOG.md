@@ -1,9 +1,4 @@
 # CHANGELOG — BitCrypto
-
-## [2.5.1] — BIP-322 mensagens
-### Added
-- Suporte a assinatura e verificação de mensagens genéricas (**BIP-322**) com `--sign-message`/`--verify-message`.
-
 ## [2.5.0] — wNAF + precompute(G); SHA‑256 unrolling; PSBT pretty
 ### Added
 - EC: `s·G` com **wNAF (w=4)** + **precompute de G** (odd 1..15).

@@ -107,12 +107,14 @@ struct Secp256k1{
                 }
             }
             naf[len++]=zi;
-            // d >>= 1
-            uint64_t c=d.v[3]&1ULL;
-            d.v[3] = (d.v[3]>>1);
-            uint64_t c2 = d.v[2]&1ULL; d.v[3] |= (d.v[2]&1ULL)<<63; d.v[2] = (d.v[2]>>1);
-            uint64_t c1 = d.v[1]&1ULL; d.v[2] |= c1<<63; d.v[1] = (d.v[1]>>1);
-            d.v[1] |= (d.v[0]&1ULL)<<63; d.v[0] = (d.v[0]>>1);
+            // d >>= 1 (propaga bits entre os 256 bits do escalar)
+            d.v[3] >>= 1;
+            d.v[3] |= (d.v[2] & 1ULL) << 63;
+            d.v[2] >>= 1;
+            d.v[2] |= (d.v[1] & 1ULL) << 63;
+            d.v[1] >>= 1;
+            d.v[1] |= (d.v[0] & 1ULL) << 63;
+            d.v[0] >>= 1;
         }
         // Evaluate
         ECPointJ R{Fp::zero(),Fp::zero(),Fp::zero()};

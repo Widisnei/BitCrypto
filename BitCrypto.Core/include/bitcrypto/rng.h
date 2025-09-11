@@ -3,7 +3,9 @@
 #include <cstddef>
 #include <cstring>
 #if defined(_WIN32)
+  #ifndef NOMINMAX
   #define NOMINMAX
+  #endif
   #include <windows.h>
   #include <bcrypt.h>
   #pragma comment(lib, "bcrypt.lib")
@@ -12,7 +14,8 @@
 namespace bitcrypto {
 inline bool rng_system(uint8_t* out, size_t n){
 #if defined(_WIN32)
-    return BCRYPT_SUCCESS == BCryptGenRandom(NULL, out, (ULONG)n, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+    // STATUS_SUCCESS (0) indica sucesso na API CNG
+    return BCryptGenRandom(nullptr, out, (ULONG)n, BCRYPT_USE_SYSTEM_PREFERRED_RNG) == 0;
 #else
     // Fallback simples para ambientes não Windows (apenas para desenvolvimento)
     // Em produção Windows/VS2022, o caminho CNG acima é utilizado.

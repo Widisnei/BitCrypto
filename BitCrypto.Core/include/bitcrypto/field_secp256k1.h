@@ -23,7 +23,9 @@ struct Fp{
     // Multiplicação de Montgomery: (a * b * R^{-1}) mod p
     // Rotina `mac64` baseada em `mul64x64_128` para compatibilidade com MSVC.
     BITCRYPTO_HD inline static void mont_mul(const uint64_t a[4], const uint64_t b[4], uint64_t r[4]){
-        uint64_t T[9]={0,0,0,0,0,0,0,0,0};
+        // Vetor temporário com folga para propagar o último carry sem
+        // sobrescrever a pilha; T[9] atua como sentinela extra.
+        uint64_t T[10]={0,0,0,0,0,0,0,0,0,0};
         // Fase 1: produto clássico a*b
         for(int i=0;i<4;i++){
             uint64_t c=0;
@@ -32,7 +34,7 @@ struct Fp{
             T[i+2]=mac64(a[i],b[2],T[i+2],c);
             T[i+3]=mac64(a[i],b[3],T[i+3],c);
             uint64_t before=T[i+4]; T[i+4]+=c; uint64_t cc=(T[i+4]<before); int k=i+5;
-            while(cc && k<9){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
+            while(cc && k<10){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
         }
         // Fase 2: redução de Montgomery
         for(int i=0;i<4;i++){
@@ -42,7 +44,7 @@ struct Fp{
             T[i+2]=mac64(m,P[2],T[i+2],c);
             T[i+3]=mac64(m,P[3],T[i+3],c);
             uint64_t before=T[i+4]; T[i+4]+=c; uint64_t cc=(T[i+4]<before); int k=i+5;
-            while(cc && k<9){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
+            while(cc && k<10){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
             T[i]=0; // limpa o limb já reduzido
         }
         uint64_t res[5]={T[4],T[5],T[6],T[7],T[8]};

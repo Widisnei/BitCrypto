@@ -27,7 +27,9 @@ struct Fn{
         return r2;
     }
     BITCRYPTO_HD inline static void mont_mul(const uint64_t a[4], const uint64_t b[4], uint64_t r[4]){
-        uint64_t T[9]={0,0,0,0,0,0,0,0,0};
+        // T com folga para o último carry (índice 9) evitando
+        // corrupção de pilha quando a propagação atinge o topo.
+        uint64_t T[10]={0,0,0,0,0,0,0,0,0,0};
         for(int i=0;i<4;i++){
             uint64_t c=0;
             T[i+0]=mac64(a[i],b[0],T[i+0],c);
@@ -35,7 +37,7 @@ struct Fn{
             T[i+2]=mac64(a[i],b[2],T[i+2],c);
             T[i+3]=mac64(a[i],b[3],T[i+3],c);
             uint64_t before=T[i+4]; T[i+4]+=c; uint64_t cc=(T[i+4]<before); int k=i+5;
-            while(cc && k<9){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
+            while(cc && k<10){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
         }
         for(int i=0;i<4;i++){
             uint64_t m=T[i]*N0_PRIME; uint64_t c=0;
@@ -44,7 +46,7 @@ struct Fn{
             T[i+2]=mac64(m,N[2],T[i+2],c);
             T[i+3]=mac64(m,N[3],T[i+3],c);
             uint64_t before=T[i+4]; T[i+4]+=c; uint64_t cc=(T[i+4]<before); int k=i+5;
-            while(cc && k<9){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
+            while(cc && k<10){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
             T[i]=0;
         }
         uint64_t res[5]={T[4],T[5],T[6],T[7],T[8]};

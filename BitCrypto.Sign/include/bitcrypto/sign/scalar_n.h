@@ -21,7 +21,8 @@ struct Fn{
         uint64_t m=0-(uint64_t)(1-br); x[0]=(x[0]&~m)|(t0&m); x[1]=(x[1]&~m)|(t1&m); x[2]=(x[2]&~m)|(t2&m); x[3]=(x[3]&~m)|(t3&m);
     }
     BITCRYPTO_HD static inline void mont_mul(const uint64_t a[4], const uint64_t b[4], uint64_t r[4]){
-        uint64_t T[8]={0,0,0,0,0,0,0,0};
+        // Buffer estendido para acomodar carries até o índice 9.
+        uint64_t T[10]={0,0,0,0,0,0,0,0,0,0};
         for(int i=0;i<4;i++){
             uint64_t c=0;
             T[i+0]=mac64(a[i],b[0],T[i+0],c);
@@ -29,7 +30,7 @@ struct Fn{
             T[i+2]=mac64(a[i],b[2],T[i+2],c);
             T[i+3]=mac64(a[i],b[3],T[i+3],c);
             uint64_t before=T[i+4]; T[i+4]+=c; uint64_t cc=(T[i+4]<before); int k=i+5;
-            while(cc && k<8){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
+            while(cc && k<10){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
         }
         for(int i=0;i<4;i++){
             uint64_t m=T[i]*N0_PRIME; uint64_t c=0;
@@ -38,9 +39,9 @@ struct Fn{
             T[i+2]=mac64(m,N[2],T[i+2],c);
             T[i+3]=mac64(m,N[3],T[i+3],c);
             uint64_t before=T[i+4]; T[i+4]+=c; uint64_t cc=(T[i+4]<before); int k=i+5;
-            while(cc && k<8){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
+            while(cc && k<10){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
         }
-        uint64_t res[5]={T[4],T[5],T[6],T[7],0};
+        uint64_t res[5]={T[4],T[5],T[6],T[7],T[8]};
         while(res[4] || res[3]>N[3] || (res[3]==N[3] && (res[2]>N[2] || (res[2]==N[2] && (res[1]>N[1] || (res[1]==N[1] && res[0]>=N[0])))))){
             uint64_t br=0;
             res[0]=subb64(res[0],N[0],br);

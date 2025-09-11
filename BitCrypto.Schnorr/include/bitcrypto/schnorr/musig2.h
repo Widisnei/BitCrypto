@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <cstring>
 #include <bitcrypto/hash/sha256.h>
-#include <bitcrypto/msm_pippenger.h>
 #include <bitcrypto/sign/sign.h>
 #include <bitcrypto/encoding/taproot.h>
 
@@ -19,7 +18,7 @@ namespace bitcrypto { namespace schnorr {
 // os coeficientes determinísticos de MuSig2.
 static inline bool musig2_key_aggregate(const std::vector<ECPointA>& pubs,
                                         ECPointA& out,
-                                        PippengerContext* ctx=nullptr){
+                                        void* ctx=nullptr){
     size_t n = pubs.size();
     if(n==0){ out = ECPointA{Fp::zero(),Fp::zero(),true}; return false; }
     if(n==1){ out = pubs[0]; return true; }
@@ -58,7 +57,14 @@ static inline bool musig2_key_aggregate(const std::vector<ECPointA>& pubs,
         pts.push_back(pubs[idx]);
     }
 
-    return msm_pippenger(pts, scalars, out, ctx);
+    // Acumula \sum mu_i * P_i com multiplicações escalares simples
+    ECPointJ acc = Secp256k1::scalar_mul(scalars[0], pts[0]);
+    for(size_t i=1;i<n;i++){
+        ECPointJ tmp = Secp256k1::scalar_mul(scalars[i], pts[i]);
+        acc = Secp256k1::add(acc, tmp);
+    }
+    out = Secp256k1::to_affine(acc);
+    return !out.infinity;
 }
 
 // Soma *nonces* de forma eficiente usando o motor MSM com
@@ -66,11 +72,15 @@ static inline bool musig2_key_aggregate(const std::vector<ECPointA>& pubs,
 // para acumular R = \Sigma R_i em validações MuSig2.
 static inline bool musig2_nonce_aggregate(const std::vector<ECPointA>& nonces,
                                           ECPointA& out,
-                                          PippengerContext* ctx=nullptr){
+                                          void* ctx=nullptr){
     size_t n = nonces.size();
     if(n==0){ out = ECPointA{Fp::zero(),Fp::zero(),true}; return false; }
-    std::vector<U256> ones(n, U256::one());
-    return msm_pippenger(nonces, ones, out, ctx);
+    ECPointJ acc = Secp256k1::to_jacobian(nonces[0]);
+    for(size_t i=1;i<n;i++){
+        acc = Secp256k1::add(acc, Secp256k1::to_jacobian(nonces[i]));
+    }
+    out = Secp256k1::to_affine(acc);
+    return !out.infinity;
 }
 
 // Combina assinaturas parciais s_i retornando s = \Sigma s_i (mod n).
@@ -94,7 +104,7 @@ static inline bool musig2_sign(const std::vector<ECPointA>& pubs,
                                const std::vector<U256>& parts,
                                ECPointA& agg_key,
                                uint8_t sig[64],
-                               PippengerContext* ctx=nullptr){
+                               void* ctx=nullptr){
     if (pubs.empty() || nonces.empty() || parts.empty()) return false;
     if (pubs.size()!=nonces.size() || pubs.size()!=parts.size()) return false;
     ECPointA R; U256 s;
@@ -121,7 +131,7 @@ static inline bool musig2_verify(const std::vector<ECPointA>& pubs,
                                  const std::vector<ECPointA>& nonces,
                                  const std::vector<U256>& parts,
                                  const uint8_t msg[32],
-                                 PippengerContext* ctx=nullptr){
+                                 void* ctx=nullptr){
     if (pubs.empty() || nonces.empty() || parts.empty()) return false;
     if (pubs.size()!=nonces.size() || pubs.size()!=parts.size()) return false;
     ECPointA P,R;

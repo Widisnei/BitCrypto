@@ -73,7 +73,10 @@ static inline void split_scalar_lambda(const U256& k,U256& r1,U256& r2){
 
 // Shamir's trick: calcula a*P + b*G reutilizando MSM Pippenger
 static inline bool shamir_trick(const ECPointA& P,const U256& a,const U256& b,ECPointA& out){
-    if(P.infinity) { out = ECPointA{Fp::zero(),Fp::zero(),true}; return false; }
+    if(P.infinity || !Secp256k1::is_on_curve(P)){
+        out = ECPointA{Fp::zero(),Fp::zero(),true};
+        return false;
+    }
     std::vector<ECPointA> pts{P, Secp256k1::G()};
     std::vector<U256> sc{a, b};
     PippengerContext ctx; // utiliza precompute interno

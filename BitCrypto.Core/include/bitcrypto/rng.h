@@ -1,18 +1,22 @@
 #pragma once
 #include <cstdint>
 #include <cstddef>
-#include <cstring>
 #if defined(_WIN32)
-  #define NOMINMAX
   #include <windows.h>
   #include <bcrypt.h>
-  #pragma comment(lib, "bcrypt.lib")
+  #include <ntstatus.h>
+  #if defined(_MSC_VER)
+    #pragma comment(lib, "bcrypt.lib")
+  #endif
+  #undef min
+  #undef max
 #endif
 #include "base.h"
 namespace bitcrypto {
 inline bool rng_system(uint8_t* out, size_t n){
 #if defined(_WIN32)
-    return BCRYPT_SUCCESS == BCryptGenRandom(NULL, out, (ULONG)n, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+    NTSTATUS st = BCryptGenRandom(nullptr, out, (ULONG)n, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+    return st == STATUS_SUCCESS;
 #else
     // Fallback simples para ambientes não Windows (apenas para desenvolvimento)
     // Em produção Windows/VS2022, o caminho CNG acima é utilizado.

@@ -5,7 +5,9 @@
   #include <windows.h>
   #include <bcrypt.h>
   #include <ntstatus.h>
-  #pragma comment(lib, "bcrypt.lib")
+  #if defined(_MSC_VER)
+    #pragma comment(lib, "bcrypt.lib")
+  #endif
   #undef min
   #undef max
 #endif

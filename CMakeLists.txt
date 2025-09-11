@@ -63,6 +63,10 @@ target_include_directories(bitcrypto_common INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.Math/include
   ${CMAKE_CURRENT_SOURCE_DIR}/BitCrypto.EC/include
 )
+# Link com a lib de entropia nativa no Windows
+if(WIN32)
+  target_link_libraries(bitcrypto_common INTERFACE bcrypt)
+endif()
 
 if(BITCRYPTO_ENABLE_CUDA)
   enable_language(CUDA)

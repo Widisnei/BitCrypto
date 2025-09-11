@@ -32,6 +32,8 @@ BitCrypto.CLI --musig2-sign --pubs x1,x2 --nonces r1,r2 --parts s1,s2
 BitCrypto.CLI --musig2-verify --pubs x1,x2 --nonces r1,r2 --parts s1,s2 --msg32 m
 ```
 
+A CLI expõe `--musig2-sign` e `--musig2-verify` para compor e validar assinaturas Schnorr agregadas.
+
 
 ## Novidades 0.9.0
 - **Assinaturas**: **ECDSA** (RFC6979, **low‑S**, **DER** estrito) e **Schnorr** (**BIP‑340**).

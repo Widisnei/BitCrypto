@@ -55,26 +55,52 @@ struct ECDSA_Signature { uint8_t r[32]; uint8_t s[32]; };
 
 inline bool ecdsa_sign(const uint8_t priv32[32], const uint8_t hash32[32], ECDSA_Signature& sig, bool low_s=true){
     using namespace bitcrypto;
-    U256 d = U256::from_be32(priv32); Secp256k1::scalar_mod_n(d); if (d.is_zero()) return false;
-    U256 e = U256::from_be32(hash32); reduce_mod_n(e);
-    uint8_t k32[32]; rfc6979_nonce(priv32, hash32, k32);
-    U256 k = U256::from_be32(k32);
-    Secp256k1::scalar_mod_n(k);
+    bool ok=false;
+    U256 d = U256::from_be32(priv32);
+    U256 e = U256::from_be32(hash32);
+    uint8_t k32[32];
+    U256 k, rx, s;
+    ECPointJ Rj;
+    ECPointA Ra;
+    Fn kinv, s_m;
+    do {
+        Secp256k1::scalar_mod_n(d);
+        if (d.is_zero()) break;
+        reduce_mod_n(e);
+        rfc6979_nonce(priv32, hash32, k32);
+        k = U256::from_be32(k32);
+        Secp256k1::scalar_mod_n(k);
+        secure_memzero(k32, sizeof(k32));
+        if (k.is_zero()) break;
+        Rj = Secp256k1::scalar_mul(k, Secp256k1::G());
+        Ra = Secp256k1::to_affine(Rj);
+        rx = Ra.x.to_u256_nm();
+        reduce_mod_n(rx);
+        if (rx.is_zero()) break;
+        rx.to_be32(sig.r);
+        kinv = Fn::inv(Fn::from_u256_nm(k));
+        s_m = Fn::mul(kinv, Fn::add(Fn::from_u256_nm(e), Fn::mul(Fn::from_u256_nm(rx), Fn::from_u256_nm(d))));
+        s = s_m.to_u256_nm();
+        if (low_s){
+            const uint64_t N[4]={0xBFD25E8CD0364141ULL,0xBAAEDCE6AF48A03BULL,0xFFFFFFFFFFFFFFFEULL,0xFFFFFFFFFFFFFFFFULL};
+            uint64_t halfN[4] = {N[0]>>1 | (N[1]&1?0x8000000000000000ULL:0), (N[1]>>1) | (N[2]&1?0x8000000000000000ULL:0), (N[2]>>1) | (N[3]&1?0x8000000000000000ULL:0), (N[3]>>1)};
+            bool gt=false; for (int i=3;i>=0;i--){ if (s.v[i]>halfN[i]) { gt=true; break; } else if (s.v[i]<halfN[i]) break; } if (gt){ uint64_t br=0; s.v[0]=subb64(N[0],s.v[0],br); s.v[1]=subb64(N[1],s.v[1],br); s.v[2]=subb64(N[2],s.v[2],br); s.v[3]=subb64(N[3],s.v[3],br); }
+        }
+        s.to_be32(sig.s);
+        ok = !is_zero32(sig.s);
+    } while(false);
+    // limpa segredos antes de sair
+    secure_memzero(&d, sizeof(d));
+    secure_memzero(&e, sizeof(e));
     secure_memzero(k32, sizeof(k32));
-    if (k.is_zero()) return false;
-    ECPointJ Rj = Secp256k1::scalar_mul(k, Secp256k1::G());
-    ECPointA Ra = Secp256k1::to_affine(Rj);
-    U256 rx = Ra.x.to_u256_nm(); reduce_mod_n(rx); if (rx.is_zero()) return false; rx.to_be32(sig.r);
-    Fn kinv = Fn::inv(Fn::from_u256_nm(k));
-    Fn s_m = Fn::mul(kinv, Fn::add(Fn::from_u256_nm(e), Fn::mul(Fn::from_u256_nm(rx), Fn::from_u256_nm(d))));
-    U256 s = s_m.to_u256_nm();
-    if (low_s){
-        const uint64_t N[4]={0xBFD25E8CD0364141ULL,0xBAAEDCE6AF48A03BULL,0xFFFFFFFFFFFFFFFEULL,0xFFFFFFFFFFFFFFFFULL};
-        uint64_t halfN[4] = {N[0]>>1 | (N[1]&1?0x8000000000000000ULL:0), (N[1]>>1) | (N[2]&1?0x8000000000000000ULL:0), (N[2]>>1) | (N[3]&1?0x8000000000000000ULL:0), (N[3]>>1)};
-        bool gt=false; for (int i=3;i>=0;i--){ if (s.v[i]>halfN[i]) { gt=true; break; } else if (s.v[i]<halfN[i]) break; } if (gt){ uint64_t br=0; s.v[0]=subb64(N[0],s.v[0],br); s.v[1]=subb64(N[1],s.v[1],br); s.v[2]=subb64(N[2],s.v[2],br); s.v[3]=subb64(N[3],s.v[3],br); }
-    }
-    s.to_be32(sig.s);
-    return !is_zero32(sig.s);
+    secure_memzero(&k, sizeof(k));
+    secure_memzero(&rx, sizeof(rx));
+    secure_memzero(&kinv, sizeof(kinv));
+    secure_memzero(&s_m, sizeof(s_m));
+    secure_memzero(&s, sizeof(s));
+    secure_memzero(&Rj, sizeof(Rj));
+    secure_memzero(&Ra, sizeof(Ra));
+    return ok;
 }
 
 // Alias de compatibilidade com a nomenclatura anterior

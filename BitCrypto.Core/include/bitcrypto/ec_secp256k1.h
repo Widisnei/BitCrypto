@@ -28,39 +28,34 @@ struct Secp256k1{
         Fp zinv=Fp::inv(P.Z), z2=Fp::sqr(zinv), z3=Fp::mul(z2,zinv);
         return ECPointA{Fp::mul(P.X,z2), Fp::mul(P.Y,z3), false};
     }
+    // Implementações ingênuas em coordenadas afins para garantir correção
     static BITCRYPTO_HD inline ECPointJ dbl(const ECPointJ& P){
         if (is_infinity(P)) return P;
-        Fp S=Fp::mul(P.X,P.X);
-        Fp M=Fp::add(Fp::add(S,S),S);
-        Fp T=Fp::mul(P.Y,P.Y);
-        Fp U=Fp::mul(P.X,T);
-        Fp eightU=Fp::add(U,U); eightU=Fp::add(eightU,eightU); eightU=Fp::add(eightU,eightU);
-        ECPointJ R;
-        R.X = Fp::sub(Fp::sqr(M), eightU);
-        Fp Y4=Fp::mul(T,T);
-        Fp fourU=Fp::add(U,U); fourU=Fp::add(fourU,fourU);
-        Fp tmp=Fp::mul(M, Fp::sub(fourU, R.X));
-        R.Y = Fp::sub(tmp, Fp::add(Y4, Y4));
-        R.Z = Fp::mul(Fp::add(P.Y,P.Y), P.Z);
-        return R;
+        ECPointA A = to_affine(P);
+        if (is_zero_fp(A.y)) return ECPointJ{Fp::zero(),Fp::zero(),Fp::zero()};
+        Fp three = Fp::from_u256_nm(U256{{3,0,0,0}});
+        Fp two   = Fp::from_u256_nm(U256{{2,0,0,0}});
+        Fp slope = Fp::mul(three, Fp::sqr(A.x));
+        Fp inv   = Fp::inv(Fp::mul(two, A.y));
+        Fp m     = Fp::mul(slope, inv);
+        Fp xr    = Fp::sub(Fp::sub(Fp::sqr(m), A.x), A.x);
+        Fp yr    = Fp::sub(Fp::mul(m, Fp::sub(A.x, xr)), A.y);
+        return to_jacobian(ECPointA{xr, yr, false});
     }
     static BITCRYPTO_HD inline ECPointJ add(const ECPointJ& P, const ECPointJ& Q){
-        if (is_infinity(P)) return Q; if (is_infinity(Q)) return P;
-        Fp Z1Z1=Fp::sqr(P.Z), Z2Z2=Fp::sqr(Q.Z);
-        Fp U1=Fp::mul(P.X,Z2Z2), U2=Fp::mul(Q.X,Z1Z1);
-        Fp S1=Fp::mul(Fp::mul(P.Y,Q.Z),Z2Z2), S2=Fp::mul(Fp::mul(Q.Y,P.Z),Z1Z1);
-        Fp H=Fp::sub(U2,U1); Fp I=Fp::sqr(Fp::add(H,H)); Fp J=Fp::mul(H,I);
-        Fp r = Fp::add(Fp::sub(S2,S1), Fp::sub(S2,S1));
-        if (is_zero_fp(H)){ if (is_zero_fp(r)) return dbl(P); return ECPointJ{Fp::zero(),Fp::zero(),Fp::zero()}; }
-        Fp V=Fp::mul(U1,I);
-        ECPointJ R;
-        R.X = Fp::sub(Fp::sub(Fp::sqr(r),J), Fp::add(V,V));
-        Fp t = Fp::sub(V, R.X);
-        R.Y = Fp::sub(Fp::mul(r,t), Fp::add(Fp::mul(S1,J), Fp::mul(S1,J)));
-        Fp Z1pZ2 = Fp::add(P.Z, Q.Z);
-        Fp Z1pZ2sq = Fp::sqr(Z1pZ2);
-        R.Z = Fp::mul(Fp::sub(Fp::sub(Z1pZ2sq, Z1Z1), Z2Z2), H);
-        return R;
+        if (is_infinity(P)) return Q;
+        if (is_infinity(Q)) return P;
+        ECPointA A = to_affine(P);
+        ECPointA B = to_affine(Q);
+        if (A.x.v[0]==B.x.v[0] && A.x.v[1]==B.x.v[1] && A.x.v[2]==B.x.v[2] && A.x.v[3]==B.x.v[3]){
+            if (A.y.v[0]==B.y.v[0] && A.y.v[1]==B.y.v[1] && A.y.v[2]==B.y.v[2] && A.y.v[3]==B.y.v[3]) return dbl(P);
+            return ECPointJ{Fp::zero(),Fp::zero(),Fp::zero()};
+        }
+        Fp inv = Fp::inv(Fp::sub(B.x, A.x));
+        Fp m   = Fp::mul(Fp::sub(B.y, A.y), inv);
+        Fp xr  = Fp::sub(Fp::sub(Fp::sqr(m), A.x), B.x);
+        Fp yr  = Fp::sub(Fp::mul(m, Fp::sub(A.x, xr)), A.y);
+        return to_jacobian(ECPointA{xr, yr, false});
     }
     static BITCRYPTO_HD inline void cswap(ECPointJ& A, ECPointJ& B, uint64_t m){ for(int i=0;i<4;i++) cswap64(A.X.v[i],B.X.v[i],m); for(int i=0;i<4;i++) cswap64(A.Y.v[i],B.Y.v[i],m); for(int i=0;i<4;i++) cswap64(A.Z.v[i],B.Z.v[i],m); }
     static BITCRYPTO_HD inline ECPointJ scalar_mul(const U256& k, const ECPointA& P_aff){
@@ -112,12 +107,14 @@ struct Secp256k1{
                 }
             }
             naf[len++]=zi;
-            // d >>= 1
-            uint64_t c=d.v[3]&1ULL;
-            d.v[3] = (d.v[3]>>1);
-            uint64_t c2 = d.v[2]&1ULL; d.v[3] |= (d.v[2]&1ULL)<<63; d.v[2] = (d.v[2]>>1);
-            uint64_t c1 = d.v[1]&1ULL; d.v[2] |= c1<<63; d.v[1] = (d.v[1]>>1);
-            d.v[1] |= (d.v[0]&1ULL)<<63; d.v[0] = (d.v[0]>>1);
+            // d >>= 1 (propaga bits entre os 256 bits do escalar)
+            d.v[3] >>= 1;
+            d.v[3] |= (d.v[2] & 1ULL) << 63;
+            d.v[2] >>= 1;
+            d.v[2] |= (d.v[1] & 1ULL) << 63;
+            d.v[1] >>= 1;
+            d.v[1] |= (d.v[0] & 1ULL) << 63;
+            d.v[0] >>= 1;
         }
         // Evaluate
         ECPointJ R{Fp::zero(),Fp::zero(),Fp::zero()};

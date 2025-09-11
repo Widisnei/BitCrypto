@@ -22,6 +22,7 @@
 #include <bitcrypto/hd/bip32.h>
 #include <bitcrypto/hd/bip39.h>
 #include <bitcrypto/hd/bip44.h>
+#include <bitcrypto/schnorr/musig2.h>
 
 using namespace bitcrypto;
 
@@ -34,6 +35,23 @@ static bool hex_to_bytes(const std::string& s, std::vector<uint8_t>& out){
 }
 static std::string bytes_to_hex(const uint8_t* p,size_t n){ std::ostringstream o; o<<std::hex<<std::setfill('0'); for(size_t i=0;i<n;i++) o<<std::setw(2)<<(int)p[i]; return o.str(); }
 
+static bool parse_xonly_list(const std::string& csv, std::vector<ECPointA>& out){
+    std::stringstream ss(csv); std::string item; out.clear();
+    while(std::getline(ss,item,',')){
+        if(item.size()!=64) return false; std::vector<uint8_t> b; if(!hex_to_bytes(item,b)||b.size()!=32) return false;
+        U256 x = U256::from_be32(b.data()); ECPointA P; if(!Secp256k1::lift_x_even_y(x,P)) return false; out.push_back(P);
+    }
+    return !out.empty();
+}
+static bool parse_scalar_list(const std::string& csv, std::vector<U256>& out){
+    std::stringstream ss(csv); std::string item; out.clear();
+    while(std::getline(ss,item,',')){
+        if(item.size()!=64) return false; std::vector<uint8_t> b; if(!hex_to_bytes(item,b)||b.size()!=32) return false;
+        out.push_back(U256::from_be32(b.data()));
+    }
+    return !out.empty();
+}
+
 static void print_help(){
     std::cout<<
 R"(BitCrypto.CLI
@@ -42,6 +60,8 @@ EC-ASSINATURA:
   --verify-ecdsa --pub <hex33|65> --sig <DERhex> --msg32 <hex32>
   --sign-schnorr --priv <hex32> --msg32 <hex32> [--aux <hex32>]
   --verify-schnorr --xonly <hex32> --sig <hex64> --msg32 <hex32>
+  --musig2-sign --pubs x1,x2 --nonces r1,r2 --parts s1,s2
+  --musig2-verify --pubs x1,x2 --nonces r1,r2 --parts s1,s2 --msg32 <hex32>
   --sign-message --priv <hex32> --msg "<txt>"
   --verify-message --pub <hex33|65> --sig <hex64> --msg "<txt>"
 
@@ -61,9 +81,11 @@ int main(int argc, char** argv){
     if (argc<=1){ print_help(); return 0; }
 
     bool sign_ecdsa=false, verify_ecdsa=false, sign_schnorr=false, verify_schnorr=false, sign_message=false, verify_message=false;
+    bool musig2_sign=false, musig2_verify=false;
     bool want_mnemonic=false, want_seed=false, want_xprv=false, want_derive=false, want_xpub_from_xprv=false, want_derive_pub=false;
     bool testnet_hd=false;
     std::string msg32_hex, sig_hex, pub_hex, xonly_hex, aux_hex, priv_hex, msg_txt;
+    std::string pubs_csv, nonces_csv, parts_csv;
     std::string mnemonic, passphrase, seed_hex, xprv_b58, xpub_b58, path_str, xprv_import, xpub_import;
     int strength_bits=128;
 
@@ -73,11 +95,16 @@ int main(int argc, char** argv){
         else if (a=="--verify-ecdsa") verify_ecdsa=true;
         else if (a=="--sign-schnorr") sign_schnorr=true;
         else if (a=="--verify-schnorr") verify_schnorr=true;
+        else if (a=="--musig2-sign") musig2_sign=true;
+        else if (a=="--musig2-verify") musig2_verify=true;
         else if (a=="--sign-message") sign_message=true;
         else if (a=="--verify-message") verify_message=true;
         else if (a=="--msg32" && i+1<argc) msg32_hex=argv[++i];
         else if (a=="--sig" && i+1<argc) sig_hex=argv[++i];
         else if (a=="--pub" && i+1<argc) pub_hex=argv[++i];
+        else if (a=="--pubs" && i+1<argc) pubs_csv=argv[++i];
+        else if (a=="--nonces" && i+1<argc) nonces_csv=argv[++i];
+        else if (a=="--parts" && i+1<argc) parts_csv=argv[++i];
         else if (a=="--xonly" && i+1<argc) xonly_hex=argv[++i];
         else if (a=="--aux" && i+1<argc) aux_hex=argv[++i];
         else if (a=="--msg" && i+1<argc) msg_txt=argv[++i];
@@ -134,6 +161,24 @@ int main(int argc, char** argv){
             if (xonly_hex.size()!=64 || sig_hex.size()!=128){ std::cerr<<"--xonly <hex32> e --sig <hex64>\n"; return 1; }
             auto X=to_bytes(xonly_hex); auto S=to_bytes(sig_hex);
             bool ok = bitcrypto::sign::schnorr_verify_bip340(X.data(), m.data(), S.data());
+            std::cout<<(ok?"OK":"FAIL")<<"\n"; return ok?0:1;
+        }
+    }
+    if (musig2_sign || musig2_verify){
+        if (pubs_csv.empty()||nonces_csv.empty()||parts_csv.empty()){ std::cerr<<"--pubs/--nonces/--parts requeridos\n"; return 1; }
+        std::vector<ECPointA> pubs, nonces; std::vector<U256> parts;
+        if(!parse_xonly_list(pubs_csv, pubs) || !parse_xonly_list(nonces_csv, nonces) || !parse_scalar_list(parts_csv, parts) || pubs.size()!=nonces.size() || pubs.size()!=parts.size()){
+            std::cerr<<"listas invalidas\n"; return 1; }
+        if (musig2_sign){
+            ECPointA P; uint8_t sig[64];
+            if(!bitcrypto::schnorr::musig2_sign(pubs, nonces, parts, P, sig)){ std::cerr<<"Falha MuSig2\n"; return 1; }
+            uint8_t px[32]; P.x.to_u256_nm().to_be32(px);
+            std::cout<<bytes_to_hex(px,32)<<" "<<bytes_to_hex(sig,64)<<"\n"; return 0;
+        }
+        if (musig2_verify){
+            if (msg32_hex.size()!=64){ std::cerr<<"--msg32 requer 32 bytes hex\n"; return 1; }
+            std::vector<uint8_t> m=to_bytes(msg32_hex);
+            bool ok = bitcrypto::schnorr::musig2_verify(pubs, nonces, parts, m.data());
             std::cout<<(ok?"OK":"FAIL")<<"\n"; return ok?0:1;
         }
     }

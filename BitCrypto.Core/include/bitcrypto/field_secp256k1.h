@@ -10,19 +10,53 @@ struct Fp{
     static constexpr uint64_t RR[4] = {0x000007A2000E90A1ULL,0x0000000000000001ULL,0x0000000000000000ULL,0x0000000000000000ULL};
     static constexpr uint64_t ONE_NM[4] = {1,0,0,0};
     BITCRYPTO_HD inline static uint64_t mac64(uint64_t a,uint64_t b,uint64_t acc,uint64_t& carry){
-        uint64_t hi,lo; mul64x64_128(a,b,hi,lo); uint64_t r=acc+lo; uint64_t c1=(r<acc); uint64_t r2=r+carry; uint64_t c2=(r2<r); carry=hi+c1+c2; return r2;
+        uint64_t hi,lo; mul64x64_128(a,b,hi,lo);
+        uint64_t r = acc + lo; uint64_t c1 = (r<acc);
+        uint64_t r2 = r + carry; uint64_t c2 = (r2<r);
+        carry = hi + c1 + c2;
+        return r2;
     }
     BITCRYPTO_HD inline static void sub_p_if_ge(uint64_t x[4]){
         uint64_t br=0; uint64_t t0=subb64(x[0],P[0],br), t1=subb64(x[1],P[1],br), t2=subb64(x[2],P[2],br), t3=subb64(x[3],P[3],br);
         uint64_t m=0-(uint64_t)(1-br); x[0]=(x[0]&~m)|(t0&m); x[1]=(x[1]&~m)|(t1&m); x[2]=(x[2]&~m)|(t2&m); x[3]=(x[3]&~m)|(t3&m);
     }
+    // Multiplicação de Montgomery: (a * b * R^{-1}) mod p
+    // Rotina `mac64` baseada em `mul64x64_128` para compatibilidade com MSVC.
     BITCRYPTO_HD inline static void mont_mul(const uint64_t a[4], const uint64_t b[4], uint64_t r[4]){
-        uint64_t T[8]={0,0,0,0,0,0,0,0};
-        for(int i=0;i<4;i++){ uint64_t c=0; T[i+0]=mac64(a[i],b[0],T[i+0],c); T[i+1]=mac64(a[i],b[1],T[i+1],c); T[i+2]=mac64(a[i],b[2],T[i+2],c); T[i+3]=mac64(a[i],b[3],T[i+3],c);
-            uint64_t before=T[i+4]; T[i+4]=T[i+4]+c; uint64_t cc=(T[i+4]<before); int k=i+5; while(cc){ before=T[k]; T[k]=T[k]+1; cc=(T[k]<before); k++; } }
-        for(int i=0;i<4;i++){ uint64_t m=T[i]*N0_PRIME; uint64_t c=0; T[i+0]=mac64(m,P[0],T[i+0],c); T[i+1]=mac64(m,P[1],T[i+1],c); T[i+2]=mac64(m,P[2],T[i+2],c); T[i+3]=mac64(m,P[3],T[i+3],c);
-            uint64_t before=T[i+4]; T[i+4]=T[i+4]+c; uint64_t cc=(T[i+4]<before); int k=i+5; while(cc){ before=T[k]; T[k]=T[k]+1; cc=(T[k]<before); k++; } }
-        r[0]=T[4]; r[1]=T[5]; r[2]=T[6]; r[3]=T[7]; sub_p_if_ge(r);
+        // Vetor temporário com folga para propagar o último carry sem
+        // sobrescrever a pilha; T[9] atua como sentinela extra.
+        uint64_t T[10]={0,0,0,0,0,0,0,0,0,0};
+        // Fase 1: produto clássico a*b
+        for(int i=0;i<4;i++){
+            uint64_t c=0;
+            T[i+0]=mac64(a[i],b[0],T[i+0],c);
+            T[i+1]=mac64(a[i],b[1],T[i+1],c);
+            T[i+2]=mac64(a[i],b[2],T[i+2],c);
+            T[i+3]=mac64(a[i],b[3],T[i+3],c);
+            uint64_t before=T[i+4]; T[i+4]+=c; uint64_t cc=(T[i+4]<before); int k=i+5;
+            while(cc && k<10){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
+        }
+        // Fase 2: redução de Montgomery
+        for(int i=0;i<4;i++){
+            uint64_t m=T[i]*N0_PRIME; uint64_t c=0;
+            T[i+0]=mac64(m,P[0],T[i+0],c);
+            T[i+1]=mac64(m,P[1],T[i+1],c);
+            T[i+2]=mac64(m,P[2],T[i+2],c);
+            T[i+3]=mac64(m,P[3],T[i+3],c);
+            uint64_t before=T[i+4]; T[i+4]+=c; uint64_t cc=(T[i+4]<before); int k=i+5;
+            while(cc && k<10){ before=T[k]; T[k]+=1; cc=(T[k]<before); k++; }
+            T[i]=0; // limpa o limb já reduzido
+        }
+        uint64_t res[5]={T[4],T[5],T[6],T[7],T[8]};
+        while(res[4] || res[3]>P[3] || (res[3]==P[3] && (res[2]>P[2] || (res[2]==P[2] && (res[1]>P[1] || (res[1]==P[1] && res[0]>=P[0])))))){
+            uint64_t br=0;
+            res[0]=subb64(res[0],P[0],br);
+            res[1]=subb64(res[1],P[1],br);
+            res[2]=subb64(res[2],P[2],br);
+            res[3]=subb64(res[3],P[3],br);
+            res[4]=subb64(res[4],0,br);
+        }
+        r[0]=res[0]; r[1]=res[1]; r[2]=res[2]; r[3]=res[3];
     }
     BITCRYPTO_HD inline static Fp from_u256_nm(const U256& a){ Fp r; mont_mul(a.v, RR, r.v); return r; }
     BITCRYPTO_HD inline U256 to_u256_nm() const { uint64_t out[4]; mont_mul(v, ONE_NM, out); return U256{{out[0],out[1],out[2],out[3]}}; }

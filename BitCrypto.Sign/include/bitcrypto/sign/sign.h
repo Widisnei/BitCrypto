@@ -117,14 +117,14 @@ inline bool schnorr_sign_bip340(const uint8_t priv32[32], const uint8_t msg32[32
     using namespace bitcrypto;
     U256 d0 = U256::from_be32(priv32); Secp256k1::scalar_mod_n(d0); if (d0.is_zero()) return false;
     ECPointA P = Secp256k1::to_affine(Secp256k1::scalar_mul(d0, Secp256k1::G()));
-    uint8_t px[32]; bool neg=false; auto Peven = encoding::normalize_even_y(P, px, neg);
+    uint8_t px[32]; bool neg=false; encoding::normalize_even_y(P, px, neg);
     U256 d = d0; if (neg){ const uint64_t N[4]={0xBFD25E8CD0364141ULL,0xBAAEDCE6AF48A03BULL,0xFFFFFFFFFFFFFFFEULL,0xFFFFFFFFFFFFFFFFULL}; uint64_t br=0; d.v[0]=subb64(N[0],d.v[0],br); d.v[1]=subb64(N[1],d.v[1],br); d.v[2]=subb64(N[2],d.v[2],br); d.v[3]=subb64(N[3],d.v[3],br); if (d.is_zero()) return false; }
     uint8_t t[32]; d.to_be32(t); if (aux_rand32){ uint8_t ah[32]; hash::sha256_tagged("BIP0340/aux", aux_rand32, 32, ah); xor32(t, ah); }
     uint8_t nonce_in[96]; std::memcpy(nonce_in, t, 32); std::memcpy(nonce_in+32, px, 32); std::memcpy(nonce_in+64, msg32, 32);
     uint8_t kn[32]; hash::sha256_tagged("BIP0340/nonce", nonce_in, sizeof(nonce_in), kn);
     U256 k0 = U256::from_be32(kn); Secp256k1::scalar_mod_n(k0); if (k0.is_zero()) return false;
     ECPointA R = Secp256k1::to_affine(Secp256k1::scalar_mul(k0, Secp256k1::G()));
-    uint8_t rx[32]; bool Rneg=false; auto Re = encoding::normalize_even_y(R, rx, Rneg);
+    uint8_t rx[32]; bool Rneg=false; encoding::normalize_even_y(R, rx, Rneg);
     U256 k = k0; if (Rneg){ const uint64_t N[4]={0xBFD25E8CD0364141ULL,0xBAAEDCE6AF48A03BULL,0xFFFFFFFFFFFFFFFEULL,0xFFFFFFFFFFFFFFFFULL}; uint64_t br=0; k.v[0]=subb64(N[0],k.v[0],br); k.v[1]=subb64(N[1],k.v[1],br); k.v[2]=subb64(N[2],k.v[2],br); k.v[3]=subb64(N[3],k.v[3],br); }
     uint8_t chal[96]; std::memcpy(chal, rx, 32); std::memcpy(chal+32, px, 32); std::memcpy(chal+64, msg32, 32);
     uint8_t eh[32]; hash::sha256_tagged("BIP0340/challenge", chal, sizeof(chal), eh);
@@ -147,7 +147,7 @@ inline bool schnorr_verify_bip340(const uint8_t pubx32[32], const uint8_t msg32[
     ECPointJ Rj = Secp256k1::add(R1, Secp256k1::to_jacobian(R2a));
     if (Secp256k1::is_infinity(Rj)) return false;
     ECPointA Ra = Secp256k1::to_affine(Rj);
-    uint8_t rx[32]; bool neg=false; auto Re = encoding::normalize_even_y(Ra, rx, neg); if (neg) return false;
+    uint8_t rx[32]; bool neg=false; encoding::normalize_even_y(Ra, rx, neg); if (neg) return false;
     uint8_t r_bytes2[32]; r.to_be32(r_bytes2); for (int i=0;i<32;i++) if (rx[i]!=r_bytes2[i]) return false; return true;
 }
 

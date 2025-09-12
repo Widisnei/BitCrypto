@@ -44,6 +44,7 @@ inline void rfc6979_nonce(const uint8_t priv32[32], const uint8_t hash32[32], ui
         hmac_sha256(K, 32, sep, sizeof(sep), K);
         hmac_sha256(K, 32, V, 32, V);
     }
+    // limpa buffers temporários antes de retornar
     secure_memzero(V, sizeof(V));
     secure_memzero(K, sizeof(K));
     secure_memzero(bx, sizeof(bx));

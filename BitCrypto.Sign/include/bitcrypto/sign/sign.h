@@ -30,12 +30,13 @@ inline void rfc6979_nonce(const uint8_t priv32[32], const uint8_t hash32[32], ui
     hmac_sha256(K, 32, tmp, 33+33+32, K);
     hmac_sha256(K, 32, V, 32, V);
     uint8_t sep[1+33+32];
+    U256 k, t;
     while (true){
         hmac_sha256(K, 32, V, 32, V);
         std::memcpy(out_k, V, 32);
-        U256 k = U256::from_be32(out_k);
+        k = U256::from_be32(out_k);
         if (!k.is_zero()){
-            U256 t=k;
+            t = k;
             Secp256k1::scalar_mod_n(t);
             if (!t.is_zero()) break;
         }
@@ -45,6 +46,8 @@ inline void rfc6979_nonce(const uint8_t priv32[32], const uint8_t hash32[32], ui
         hmac_sha256(K, 32, V, 32, V);
     }
     // limpa buffers temporários antes de retornar
+    secure_memzero(&k, sizeof(k));
+    secure_memzero(&t, sizeof(t));
     secure_memzero(V, sizeof(V));
     secure_memzero(K, sizeof(K));
     secure_memzero(bx, sizeof(bx));

@@ -6,6 +6,7 @@
   #pragma comment(lib, "bcrypt.lib")
 #else
   // Dependência: getrandom() (Linux) ou dispositivo especial /dev/urandom.
+  #include <sys/types.h>
   #include <unistd.h>
   #include <fcntl.h>
   #include <errno.h>
@@ -22,18 +23,20 @@ inline bool random_bytes(uint8_t* out, size_t n){
 #else
     size_t off = 0;
 #ifdef __linux__
-    // Usa getrandom() em sistemas Linux.
+    // Usa getrandom() em sistemas Linux; se indisponível, cai para /dev/urandom.
     while (off < n) {
         ssize_t r = ::getrandom(out + off, n - off, 0);
         if (r < 0) {
             if (errno == EINTR) continue;
+            if (errno == ENOSYS || errno == EINVAL) break; // fallback
             return false;
         }
         off += static_cast<size_t>(r);
     }
-#else
+    if (off == n) return true;
+#endif
     // Fallback genérico: leitura de /dev/urandom.
-    int fd = ::open("/dev/urandom", O_RDONLY);
+    int fd = ::open("/dev/urandom", O_RDONLY | O_CLOEXEC);
     if (fd < 0) return false;
     while (off < n) {
         ssize_t r = ::read(fd, out + off, n - off);
@@ -45,7 +48,6 @@ inline bool random_bytes(uint8_t* out, size_t n){
         off += static_cast<size_t>(r);
     }
     ::close(fd);
-#endif
     return true;
 #endif
 }

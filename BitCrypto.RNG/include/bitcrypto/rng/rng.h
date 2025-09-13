@@ -22,7 +22,7 @@ namespace bitcrypto { namespace rng {
 inline bool random_bytes(uint8_t* out, size_t n){
 #ifdef _WIN32
     NTSTATUS st = BCryptGenRandom(nullptr, reinterpret_cast<PUCHAR>(out), (ULONG)n, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
-    return st==0;
+    return BCRYPT_SUCCESS(st);
 #else
     size_t off = 0;
 #ifdef __linux__
@@ -54,4 +54,4 @@ inline bool random_bytes(uint8_t* out, size_t n){
     return true;
 #endif
 }
-}}
+}} // ns

@@ -4,6 +4,14 @@
 #ifdef _WIN32
   #include <bcrypt.h>
   #pragma comment(lib, "bcrypt.lib")
+#else
+  // Dependência: getrandom() (Linux) ou dispositivo especial /dev/urandom.
+  #include <unistd.h>
+  #include <fcntl.h>
+  #include <errno.h>
+  #ifdef __linux__
+    #include <sys/random.h>
+  #endif
 #endif
 namespace bitcrypto { namespace rng {
 // Retorna true em caso de sucesso. Usa o RNG preferido do sistema (Windows CNG).
@@ -12,8 +20,33 @@ inline bool random_bytes(uint8_t* out, size_t n){
     NTSTATUS st = BCryptGenRandom(nullptr, (PUCHAR)out, (ULONG)n, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
     return st==0;
 #else
-    // Em outros sistemas, esta função pode ser estendida no futuro (mantemos compatibilidade com o alvo Windows).
-    return false;
+    size_t off = 0;
+#ifdef __linux__
+    // Usa getrandom() em sistemas Linux.
+    while (off < n) {
+        ssize_t r = ::getrandom(out + off, n - off, 0);
+        if (r < 0) {
+            if (errno == EINTR) continue;
+            return false;
+        }
+        off += static_cast<size_t>(r);
+    }
+#else
+    // Fallback genérico: leitura de /dev/urandom.
+    int fd = ::open("/dev/urandom", O_RDONLY);
+    if (fd < 0) return false;
+    while (off < n) {
+        ssize_t r = ::read(fd, out + off, n - off);
+        if (r <= 0) {
+            if (r < 0 && errno == EINTR) continue;
+            ::close(fd);
+            return false;
+        }
+        off += static_cast<size_t>(r);
+    }
+    ::close(fd);
+#endif
+    return true;
 #endif
 }
 }}

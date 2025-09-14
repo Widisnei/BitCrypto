@@ -6,8 +6,8 @@
   #pragma comment(lib, "bcrypt.lib")
 #else
   // Dependência: fontes de entropia do sistema (`getrandom()` ou `/dev/urandom`).
-  // O descritor é aberto com `O_CLOEXEC` e erros são propagados ao chamador.
-  #include <sys/types.h>
+  // O descritor é aberto com `O_CLOEXEC`, chamadas repetem em caso de EINTR/EAGAIN
+  // e erros são propagados ao chamador.
   #include <unistd.h>
   #include <fcntl.h>
   #include <errno.h>
@@ -30,7 +30,7 @@ inline bool random_bytes(uint8_t* out, size_t n){
     while (off < n) {
         ssize_t r = ::getrandom(out + off, n - off, 0);
         if (r < 0) {
-            if (errno == EINTR) continue;
+            if (errno == EINTR || errno == EAGAIN) continue;
             if (errno == ENOSYS || errno == EINVAL) break; // fallback
             return false;
         }

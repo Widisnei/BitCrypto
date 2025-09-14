@@ -51,7 +51,9 @@ inline bool random_bytes(uint8_t* out, size_t n) {
         ssize_t r = ::read(fd, out + off, n - off);
         if (r <= 0) {
             if (r < 0 && (errno == EINTR || errno == EAGAIN)) continue;
+            int err = errno;
             ::close(fd);
+            errno = err;
             return false;
         }
         off += static_cast<size_t>(r);

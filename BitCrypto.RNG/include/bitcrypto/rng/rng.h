@@ -11,6 +11,7 @@
   #include <unistd.h>
   #include <fcntl.h>
   #include <errno.h>
+  #include <sys/types.h> // ssize_t
   #ifdef __linux__
     #include <sys/random.h>
   #endif

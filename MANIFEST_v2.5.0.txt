@@ -26,7 +26,7 @@ d0f1b66d172a3d6fb7a4db68b1f794a88dffb512b8caf0286c91ba8b76c09efd        1017  Bi
 e134c5e7ecacd36bb4cb054210a70abaf8461eedae707e641fc4998405bbcf5d        3546  BitCrypto/BitCrypto.WSCLI/src/main.cpp
 22cb673c5252d0dc81f0bc82f6b5f1651399139431e5092dd9a1c265ecfb91ed         289  BitCrypto/BitCrypto.RNG/CMakeLists.txt
 f55bb0e34a0d4f2d678a3f794661cc5ce7f133731adc76fd54df1b75555af481          16  BitCrypto/BitCrypto.RNG/src/unity.cpp
-e7aa921b285112a48db07e46d5db41c0df01cc298a5f316236d83cbf4e066f18        1919  BitCrypto/BitCrypto.RNG/include/bitcrypto/rng/rng.h
+639743caf6b15e88ddadaac1c3ce734a99c71d312955fa4e96a1fff9ee7168c9        1955  BitCrypto/BitCrypto.RNG/include/bitcrypto/rng/rng.h
 4543a3b0b1193fe5a151b3ae04f2c4b5875b1afcdaf88610ef4904c0a134abd5         455  BitCrypto/BitCrypto.PSBTCLI/CMakeLists.txt
 2972187d8c9162047959eb9f38656513d49b234ec0e7eabe29fa2cec40e97e19       12904  BitCrypto/BitCrypto.PSBTCLI/src/main.cpp
 d0c91641d3609926b9197e6cda79931238b4b423d8600ad30c83c5fbb9c8c491         762  BitCrypto/BitCrypto.CLI/CMakeLists.txt

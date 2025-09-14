@@ -7,7 +7,8 @@
 #else
   // Dependência: fontes de entropia do sistema (`getrandom()` ou `/dev/urandom`).
   // O descritor é aberto com `O_CLOEXEC`, chamadas repetem em caso de EINTR/EAGAIN
-  // e erros são propagados ao chamador.
+  // e, ao receber ENOSYS/EINVAL/EPERM de `getrandom()`, o código recai para
+  // `/dev/urandom`.  Erros são propagados ao chamador.
   #include <unistd.h>
   #include <fcntl.h>
   #include <errno.h>
@@ -32,7 +33,7 @@ inline bool random_bytes(uint8_t* out, size_t n) {
         ssize_t r = ::getrandom(out + off, n - off, 0);
         if (r < 0) {
             if (errno == EINTR || errno == EAGAIN) continue;
-            if (errno == ENOSYS || errno == EINVAL) break; // fallback
+            if (errno == ENOSYS || errno == EINVAL || errno == EPERM) break; // fallback
             return false;
         }
         off += static_cast<size_t>(r);

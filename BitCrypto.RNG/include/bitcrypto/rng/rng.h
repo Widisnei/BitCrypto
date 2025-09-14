@@ -40,7 +40,7 @@ inline bool random_bytes(uint8_t* out, size_t n) {
     if (off == n) return true;
 #endif
     // Fallback genérico: leitura de /dev/urandom.
-    int fd;
+    int fd = -1;
     for (;;) {
         fd = ::open("/dev/urandom", O_RDONLY | O_CLOEXEC);
         if (fd >= 0) break;

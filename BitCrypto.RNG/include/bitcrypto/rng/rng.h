@@ -20,7 +20,7 @@ namespace bitcrypto { namespace rng {
 // Retorna true em caso de sucesso.
 // No Windows usa o RNG preferido do sistema (CNG);
 // em Unix tenta `getrandom()` e cai para `/dev/urandom` quando necessário.
-inline bool random_bytes(uint8_t* out, size_t n){
+inline bool random_bytes(uint8_t* out, size_t n) {
 #ifdef _WIN32
     NTSTATUS st = BCryptGenRandom(nullptr, reinterpret_cast<PUCHAR>(out), (ULONG)n, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
     return BCRYPT_SUCCESS(st);

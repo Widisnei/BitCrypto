@@ -4,7 +4,6 @@
 #ifdef _WIN32
   #include <windows.h>
   #include <bcrypt.h>
-  #include <ntstatus.h>
   #if defined(_MSC_VER)
     #pragma comment(lib, "bcrypt.lib")
   #endif

@@ -2,8 +2,14 @@
 #include <cstdint>
 #include <cstddef>
 #ifdef _WIN32
+  #include <windows.h>
   #include <bcrypt.h>
-  #pragma comment(lib, "bcrypt.lib")
+  #include <ntstatus.h>
+  #if defined(_MSC_VER)
+    #pragma comment(lib, "bcrypt.lib")
+  #endif
+  #undef min
+  #undef max
 #else
   // Dependência: fontes de entropia do sistema (`getrandom()` ou `/dev/urandom`).
   // O descritor é aberto com `O_CLOEXEC`, chamadas repetem em caso de EINTR/EAGAIN

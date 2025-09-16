@@ -54,16 +54,29 @@ inline bool random_bytes(uint8_t* out, size_t n) {
     }
     while (off < n) {
         ssize_t r = ::read(fd, out + off, n - off);
-        if (r <= 0) {
-            if (r < 0 && (errno == EINTR || errno == EAGAIN)) continue;
+        if (r > 0) {
+            off += static_cast<size_t>(r);
+            continue;
+        }
+        if (r < 0) {
+            if (errno == EINTR || errno == EAGAIN) continue;
             int err = errno;
-            ::close(fd);
+            if (::close(fd) != 0) {
+                return false; // errno já reflete a falha em close()
+            }
             errno = err;
             return false;
         }
-        off += static_cast<size_t>(r);
+        // `read()` retornou 0: `/dev/urandom` não entregou dados; sinaliza erro.
+        if (::close(fd) != 0) {
+            return false;
+        }
+        errno = EIO;
+        return false;
     }
-    ::close(fd);
+    if (::close(fd) != 0) {
+        return false;
+    }
     return true;
 #endif
 }

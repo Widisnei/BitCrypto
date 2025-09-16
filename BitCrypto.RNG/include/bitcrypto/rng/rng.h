@@ -18,6 +18,7 @@
   #include <fcntl.h>
   #include <errno.h>
   #include <sys/types.h> // ssize_t
+  #include <limits>
   #ifdef __linux__
     #include <sys/random.h>
   #endif
@@ -27,15 +28,23 @@ namespace bitcrypto { namespace rng {
 // No Windows usa o RNG preferido do sistema (CNG);
 // em Unix tenta `getrandom()` e cai para `/dev/urandom` quando necessário.
 inline bool random_bytes(uint8_t* out, size_t n) {
+    if (n == 0) {
+        return true;
+    }
 #ifdef _WIN32
     NTSTATUS st = BCryptGenRandom(nullptr, reinterpret_cast<PUCHAR>(out), (ULONG)n, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
     return BCRYPT_SUCCESS(st);
 #else
     size_t off = 0;
 #ifdef __linux__
+    static constexpr size_t kGetrandomMax = 33554431u; // 32 MiB - 1, limite da syscall
     // Usa getrandom() em sistemas Linux; se indisponível, cai para /dev/urandom.
     while (off < n) {
-        ssize_t r = ::getrandom(out + off, n - off, 0);
+        size_t want = n - off;
+        if (want > kGetrandomMax) {
+            want = kGetrandomMax;
+        }
+        ssize_t r = ::getrandom(out + off, want, 0);
         if (r < 0) {
             if (errno == EINTR || errno == EAGAIN) continue;
             if (errno == ENOSYS || errno == EINVAL || errno == EPERM) break; // fallback
@@ -45,6 +54,9 @@ inline bool random_bytes(uint8_t* out, size_t n) {
     }
     if (off == n) return true;
 #endif
+    if (off >= n) {
+        return true;
+    }
     // Fallback genérico: leitura de /dev/urandom.
     int fd = -1;
     for (;;) {
@@ -52,8 +64,13 @@ inline bool random_bytes(uint8_t* out, size_t n) {
         if (fd >= 0) break;
         if (errno != EINTR && errno != EAGAIN) return false;
     }
+    const size_t max_chunk = static_cast<size_t>(std::numeric_limits<ssize_t>::max());
     while (off < n) {
-        ssize_t r = ::read(fd, out + off, n - off);
+        size_t want = n - off;
+        if (want > max_chunk) {
+            want = max_chunk;
+        }
+        ssize_t r = ::read(fd, out + off, want);
         if (r > 0) {
             off += static_cast<size_t>(r);
             continue;

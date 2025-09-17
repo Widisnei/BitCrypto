@@ -23,6 +23,42 @@
     #include <sys/random.h>
   #endif
 #endif
+#ifndef _WIN32
+namespace {
+// Fecha descritores preservando errno original em caminhos de erro.
+inline bool close_fd_preserve(int fd, int restore_errno) {
+    if (fd < 0) {
+        return true;
+    }
+    int rc;
+    do {
+        rc = ::close(fd);
+    } while (rc != 0 && errno == EINTR);
+    if (rc != 0) {
+        return false;
+    }
+    errno = restore_errno;
+    return true;
+}
+
+// Fecha descritores restaurando errno anterior em caminhos de sucesso.
+inline bool close_fd_noerrno(int fd) {
+    if (fd < 0) {
+        return true;
+    }
+    int saved_errno = errno;
+    int rc;
+    do {
+        rc = ::close(fd);
+    } while (rc != 0 && errno == EINTR);
+    if (rc != 0) {
+        return false;
+    }
+    errno = saved_errno;
+    return true;
+}
+} // namespace
+#endif
 namespace bitcrypto { namespace rng {
 // Retorna true em caso de sucesso.
 // No Windows usa o RNG preferido do sistema (CNG);
@@ -82,20 +118,18 @@ inline bool random_bytes(uint8_t* out, size_t n) {
         if (r < 0) {
             if (errno == EINTR || errno == EAGAIN) continue;
             int err = errno;
-            if (::close(fd) != 0) {
-                return false; // errno já reflete a falha em close()
+            if (!close_fd_preserve(fd, err)) {
+                return false;
             }
-            errno = err;
             return false;
         }
         // `read()` retornou 0: `/dev/urandom` não entregou dados; sinaliza erro.
-        if (::close(fd) != 0) {
+        if (!close_fd_preserve(fd, EIO)) {
             return false;
         }
-        errno = EIO;
         return false;
     }
-    if (::close(fd) != 0) {
+    if (!close_fd_noerrno(fd)) {
         return false;
     }
     return true;

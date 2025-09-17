@@ -50,6 +50,10 @@ inline bool random_bytes(uint8_t* out, size_t n) {
             if (errno == ENOSYS || errno == EINVAL || errno == EPERM) break; // fallback
             return false;
         }
+        if (r == 0) {
+            errno = EIO;
+            break; // força fallback para /dev/urandom
+        }
         off += static_cast<size_t>(r);
     }
     if (off == n) return true;

@@ -23,8 +23,10 @@
     #include <sys/random.h>
   #endif
 #endif
+namespace bitcrypto { namespace rng {
+
 #ifndef _WIN32
-namespace {
+namespace detail {
 // Fecha descritores preservando errno original em caminhos de erro.
 inline bool close_fd_preserve(int fd, int restore_errno) {
     if (fd < 0) {
@@ -57,9 +59,8 @@ inline bool close_fd_noerrno(int fd) {
     errno = saved_errno;
     return true;
 }
-} // namespace
+} // namespace detail
 #endif
-namespace bitcrypto { namespace rng {
 // Retorna true em caso de sucesso.
 // No Windows usa o RNG preferido do sistema (CNG);
 // em Unix tenta `getrandom()` e cai para `/dev/urandom` quando necessário.
@@ -118,18 +119,18 @@ inline bool random_bytes(uint8_t* out, size_t n) {
         if (r < 0) {
             if (errno == EINTR || errno == EAGAIN) continue;
             int err = errno;
-            if (!close_fd_preserve(fd, err)) {
+            if (!detail::close_fd_preserve(fd, err)) {
                 return false;
             }
             return false;
         }
         // `read()` retornou 0: `/dev/urandom` não entregou dados; sinaliza erro.
-        if (!close_fd_preserve(fd, EIO)) {
+        if (!detail::close_fd_preserve(fd, EIO)) {
             return false;
         }
         return false;
     }
-    if (!close_fd_noerrno(fd)) {
+    if (!detail::close_fd_noerrno(fd)) {
         return false;
     }
     return true;

@@ -59,6 +59,89 @@ inline bool close_fd_noerrno(int fd) {
     errno = saved_errno;
     return true;
 }
+
+#ifdef __linux__
+enum class getrandom_result {
+    completed,
+    needs_fallback,
+    error,
+};
+
+// Usa getrandom() para preencher o buffer; retorna se deve cair no fallback.
+inline getrandom_result fill_from_getrandom(uint8_t* out, size_t n, size_t& off) {
+    static constexpr size_t kGetrandomMax = 33554431u; // 32 MiB - 1, limite da syscall
+    while (off < n) {
+        size_t want = n - off;
+        if (want > kGetrandomMax) {
+            want = kGetrandomMax;
+        }
+        ssize_t r = ::getrandom(out + off, want, 0);
+        if (r < 0) {
+            if (errno == EINTR || errno == EAGAIN) {
+                continue;
+            }
+            if (errno == ENOSYS || errno == EINVAL || errno == EPERM) {
+                return getrandom_result::needs_fallback;
+            }
+            return getrandom_result::error;
+        }
+        if (r == 0) {
+            errno = EIO;
+            return getrandom_result::needs_fallback;
+        }
+        off += static_cast<size_t>(r);
+    }
+    return getrandom_result::completed;
+}
+#endif // __linux__
+
+// Lê de /dev/urandom respeitando limites de ssize_t e preservando errno.
+inline bool fill_from_urandom(uint8_t* out, size_t n, size_t off) {
+    if (off >= n) {
+        return true;
+    }
+    int fd = -1;
+    for (;;) {
+        fd = ::open("/dev/urandom", O_RDONLY | O_CLOEXEC);
+        if (fd >= 0) {
+            break;
+        }
+        if (errno != EINTR && errno != EAGAIN) {
+            return false;
+        }
+    }
+
+    const size_t max_chunk = static_cast<size_t>(std::numeric_limits<ssize_t>::max());
+    while (off < n) {
+        size_t want = n - off;
+        if (want > max_chunk) {
+            want = max_chunk;
+        }
+        ssize_t r = ::read(fd, out + off, want);
+        if (r > 0) {
+            off += static_cast<size_t>(r);
+            continue;
+        }
+        if (r < 0) {
+            if (errno == EINTR || errno == EAGAIN) {
+                continue;
+            }
+            int err = errno;
+            if (!close_fd_preserve(fd, err)) {
+                return false;
+            }
+            return false;
+        }
+        if (!close_fd_preserve(fd, EIO)) {
+            return false;
+        }
+        return false;
+    }
+    if (!close_fd_noerrno(fd)) {
+        return false;
+    }
+    return true;
+}
 } // namespace detail
 #endif
 // Retorna true em caso de sucesso.
@@ -74,66 +157,16 @@ inline bool random_bytes(uint8_t* out, size_t n) {
 #else
     size_t off = 0;
 #ifdef __linux__
-    static constexpr size_t kGetrandomMax = 33554431u; // 32 MiB - 1, limite da syscall
-    // Usa getrandom() em sistemas Linux; se indisponível, cai para /dev/urandom.
-    while (off < n) {
-        size_t want = n - off;
-        if (want > kGetrandomMax) {
-            want = kGetrandomMax;
-        }
-        ssize_t r = ::getrandom(out + off, want, 0);
-        if (r < 0) {
-            if (errno == EINTR || errno == EAGAIN) continue;
-            if (errno == ENOSYS || errno == EINVAL || errno == EPERM) break; // fallback
-            return false;
-        }
-        if (r == 0) {
-            errno = EIO;
-            break; // força fallback para /dev/urandom
-        }
-        off += static_cast<size_t>(r);
-    }
-    if (off == n) return true;
-#endif
-    if (off >= n) {
+    switch (detail::fill_from_getrandom(out, n, off)) {
+    case detail::getrandom_result::completed:
         return true;
-    }
-    // Fallback genérico: leitura de /dev/urandom.
-    int fd = -1;
-    for (;;) {
-        fd = ::open("/dev/urandom", O_RDONLY | O_CLOEXEC);
-        if (fd >= 0) break;
-        if (errno != EINTR && errno != EAGAIN) return false;
-    }
-    const size_t max_chunk = static_cast<size_t>(std::numeric_limits<ssize_t>::max());
-    while (off < n) {
-        size_t want = n - off;
-        if (want > max_chunk) {
-            want = max_chunk;
-        }
-        ssize_t r = ::read(fd, out + off, want);
-        if (r > 0) {
-            off += static_cast<size_t>(r);
-            continue;
-        }
-        if (r < 0) {
-            if (errno == EINTR || errno == EAGAIN) continue;
-            int err = errno;
-            if (!detail::close_fd_preserve(fd, err)) {
-                return false;
-            }
-            return false;
-        }
-        // `read()` retornou 0: `/dev/urandom` não entregou dados; sinaliza erro.
-        if (!detail::close_fd_preserve(fd, EIO)) {
-            return false;
-        }
+    case detail::getrandom_result::error:
         return false;
+    case detail::getrandom_result::needs_fallback:
+        break;
     }
-    if (!detail::close_fd_noerrno(fd)) {
-        return false;
-    }
-    return true;
+#endif
+    return detail::fill_from_urandom(out, n, off);
 #endif
 }
 }} // ns

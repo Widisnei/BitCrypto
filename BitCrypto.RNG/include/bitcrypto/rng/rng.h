@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <cstddef>
+#include <limits>
 #ifdef _WIN32
   #include <windows.h>
   #include <bcrypt.h>
@@ -18,7 +19,6 @@
   #include <fcntl.h>
   #include <errno.h>
   #include <sys/types.h> // ssize_t
-  #include <limits>
   #ifdef __linux__
     #include <sys/random.h>
   #endif
@@ -164,8 +164,24 @@ inline bool random_bytes(uint8_t* out, size_t n) {
         return true;
     }
 #ifdef _WIN32
-    NTSTATUS st = BCryptGenRandom(nullptr, reinterpret_cast<PUCHAR>(out), (ULONG)n, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
-    return BCRYPT_SUCCESS(st);
+    // A API do CNG aceita até ULONG bytes por chamada; fracionamos buffers maiores.
+    const size_t chunk_limit = static_cast<size_t>(std::numeric_limits<ULONG>::max());
+    size_t offset = 0;
+    while (offset < n) {
+        size_t remaining = n - offset;
+        ULONG request = remaining > chunk_limit ? std::numeric_limits<ULONG>::max()
+                                                : static_cast<ULONG>(remaining);
+        NTSTATUS st = BCryptGenRandom(nullptr,
+                                      reinterpret_cast<PUCHAR>(out + offset),
+                                      request,
+                                      BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+        if (!BCRYPT_SUCCESS(st)) {
+            ::SetLastError(static_cast<DWORD>(st));
+            return false;
+        }
+        offset += static_cast<size_t>(request);
+    }
+    return true;
 #else
     size_t off = 0;
 #ifdef __linux__

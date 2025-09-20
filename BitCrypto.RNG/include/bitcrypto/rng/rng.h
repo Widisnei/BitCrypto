@@ -148,6 +148,18 @@ inline bool fill_from_urandom(uint8_t* out, size_t n, size_t off) {
 // No Windows usa o RNG preferido do sistema (CNG);
 // em Unix tenta `getrandom()` e cai para `/dev/urandom` quando necessário.
 inline bool random_bytes(uint8_t* out, size_t n) {
+    // Rejeita ponteiros nulos quando há bytes a preencher, preservando a propagação de erro.
+    if (out == nullptr) {
+        if (n == 0) {
+            return true;
+        }
+#ifdef _WIN32
+        ::SetLastError(ERROR_INVALID_PARAMETER);
+#else
+        errno = EINVAL;
+#endif
+        return false;
+    }
     if (n == 0) {
         return true;
     }

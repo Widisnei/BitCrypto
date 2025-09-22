@@ -27,8 +27,12 @@ namespace bitcrypto { namespace rng {
 
 #ifndef _WIN32
 namespace detail {
+// Maior bloco permitido pelo tipo ssize_t ao ler de /dev/urandom.
+static constexpr size_t kDevUrandomMaxChunk =
+    static_cast<size_t>(std::numeric_limits<ssize_t>::max());
+
 // Fecha descritores preservando errno original em caminhos de erro.
-inline bool close_fd_preserve(int fd, int restore_errno) {
+[[nodiscard]] inline bool close_fd_preserve(int fd, int restore_errno) {
     if (fd < 0) {
         return true;
     }
@@ -44,7 +48,7 @@ inline bool close_fd_preserve(int fd, int restore_errno) {
 }
 
 // Fecha descritores restaurando errno anterior em caminhos de sucesso.
-inline bool close_fd_noerrno(int fd) {
+[[nodiscard]] inline bool close_fd_noerrno(int fd) {
     if (fd < 0) {
         return true;
     }
@@ -68,7 +72,7 @@ enum class getrandom_result {
 };
 
 // Usa getrandom() para preencher o buffer; retorna se deve cair no fallback.
-inline getrandom_result fill_from_getrandom(uint8_t* out, size_t n, size_t& off) {
+[[nodiscard]] inline getrandom_result fill_from_getrandom(uint8_t* out, size_t n, size_t& off) {
     static constexpr size_t kGetrandomMax = 33554431u; // 32 MiB - 1, limite da syscall
     while (off < n) {
         size_t want = n - off;
@@ -96,7 +100,7 @@ inline getrandom_result fill_from_getrandom(uint8_t* out, size_t n, size_t& off)
 #endif // __linux__
 
 // Lê de /dev/urandom respeitando limites de ssize_t e preservando errno.
-inline bool fill_from_urandom(uint8_t* out, size_t n, size_t off) {
+[[nodiscard]] inline bool fill_from_urandom(uint8_t* out, size_t n, size_t off) {
     if (off >= n) {
         return true;
     }
@@ -111,11 +115,10 @@ inline bool fill_from_urandom(uint8_t* out, size_t n, size_t off) {
         }
     }
 
-    const size_t max_chunk = static_cast<size_t>(std::numeric_limits<ssize_t>::max());
     while (off < n) {
         size_t want = n - off;
-        if (want > max_chunk) {
-            want = max_chunk;
+        if (want > kDevUrandomMaxChunk) {
+            want = kDevUrandomMaxChunk;
         }
         ssize_t r = ::read(fd, out + off, want);
         if (r > 0) {
@@ -147,7 +150,7 @@ inline bool fill_from_urandom(uint8_t* out, size_t n, size_t off) {
 // Retorna true em caso de sucesso.
 // No Windows usa o RNG preferido do sistema (CNG);
 // em Unix tenta `getrandom()` e cai para `/dev/urandom` quando necessário.
-inline bool random_bytes(uint8_t* out, size_t n) {
+[[nodiscard]] inline bool random_bytes(uint8_t* out, size_t n) {
     // Rejeita ponteiros nulos quando há bytes a preencher, preservando a propagação de erro.
     if (out == nullptr) {
         if (n == 0) {

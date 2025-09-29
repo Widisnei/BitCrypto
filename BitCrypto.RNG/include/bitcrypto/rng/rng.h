@@ -12,9 +12,10 @@
   #undef max
 #else
   // Dependência: fontes de entropia do sistema (`getrandom()` ou `/dev/urandom`).
-  // O descritor é aberto com `O_CLOEXEC`, chamadas repetem em caso de EINTR/EAGAIN
-  // e, ao receber ENOSYS/EINVAL/EPERM de `getrandom()`, o código recai para
-  // `/dev/urandom`.  Erros são propagados ao chamador.
+  // O descritor é aberto com `O_CLOEXEC`, repetindo em caso de EINTR/EAGAIN e
+  // forçando `fcntl(F_SETFD, FD_CLOEXEC)` quando a flag não é suportada no
+  // `open()`.  Ao receber ENOSYS/EINVAL/EPERM de `getrandom()`, o código recai
+  // para `/dev/urandom`.  Erros são propagados ao chamador.
   #include <unistd.h>
   #include <fcntl.h>
   #include <errno.h>
@@ -64,6 +65,65 @@ static constexpr size_t kDevUrandomMaxChunk =
     return true;
 }
 
+#if defined(O_CLOEXEC)
+// Ajusta a flag close-on-exec via fcntl(), repetindo em caso de EINTR.
+[[nodiscard]] inline bool set_cloexec_flag(int fd) {
+    int flags;
+    do {
+        flags = ::fcntl(fd, F_GETFD);
+    } while (flags == -1 && errno == EINTR);
+    if (flags == -1) {
+        return false;
+    }
+    int rc;
+    do {
+        rc = ::fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
+    } while (rc == -1 && errno == EINTR);
+    return rc != -1;
+}
+#endif
+
+// Abre `/dev/urandom`, configurando O_CLOEXEC e preservando errno em caso de erro.
+[[nodiscard]] inline bool open_urandom_fd(int& fd) {
+#if defined(O_CLOEXEC)
+    bool retried_without_cloexec = false;
+    for (;;) {
+        int flags = O_RDONLY | (retried_without_cloexec ? 0 : O_CLOEXEC);
+        fd = ::open("/dev/urandom", flags);
+        if (fd >= 0) {
+            if ((flags & O_CLOEXEC) == 0) {
+                if (!set_cloexec_flag(fd)) {
+                    int err = errno;
+                    if (!close_fd_preserve(fd, err)) {
+                        return false;
+                    }
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (errno == EINTR || errno == EAGAIN) {
+            continue;
+        }
+        if (!retried_without_cloexec && errno == EINVAL) {
+            retried_without_cloexec = true;
+            continue;
+        }
+        return false;
+    }
+#else
+    for (;;) {
+        fd = ::open("/dev/urandom", O_RDONLY);
+        if (fd >= 0) {
+            return true;
+        }
+        if (errno != EINTR && errno != EAGAIN) {
+            return false;
+        }
+    }
+#endif
+}
+
 #ifdef __linux__
 enum class getrandom_result {
     completed,
@@ -105,14 +165,8 @@ enum class getrandom_result {
         return true;
     }
     int fd = -1;
-    for (;;) {
-        fd = ::open("/dev/urandom", O_RDONLY | O_CLOEXEC);
-        if (fd >= 0) {
-            break;
-        }
-        if (errno != EINTR && errno != EAGAIN) {
-            return false;
-        }
+    if (!open_urandom_fd(fd)) {
+        return false;
     }
 
     while (off < n) {

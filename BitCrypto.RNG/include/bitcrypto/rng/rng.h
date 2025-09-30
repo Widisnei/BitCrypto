@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <limits>
+#include <type_traits>
 #ifdef _WIN32
   #include <windows.h>
   #include <bcrypt.h>
@@ -253,5 +254,19 @@ enum class getrandom_result {
 #endif
     return detail::fill_from_urandom(out, n, off);
 #endif
+}
+
+// Sobrecarga de conveniência para buffers genéricos.
+[[nodiscard]] inline bool random_bytes(void* out, size_t n) {
+    return random_bytes(static_cast<uint8_t*>(out), n);
+}
+
+// Gera um valor aleatório para tipos triviais (ex.: inteiros, structs `struct POD`).
+template <typename T>
+[[nodiscard]] inline bool random_value(T& value) {
+    static_assert(std::is_trivially_copyable<T>::value,
+                  "random_value requer tipos trivialmente copiáveis");
+    static_assert(!std::is_pointer<T>::value, "random_value não aceita ponteiros");
+    return random_bytes(reinterpret_cast<uint8_t*>(&value), sizeof(T));
 }
 }} // ns

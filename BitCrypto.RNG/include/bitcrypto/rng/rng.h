@@ -1,19 +1,304 @@
 #pragma once
 #include <cstdint>
 #include <cstddef>
+#include <limits>
+#include <type_traits>
 #ifdef _WIN32
+  #include <windows.h>
   #include <bcrypt.h>
-  #pragma comment(lib, "bcrypt.lib")
+  #if defined(_MSC_VER)
+    #pragma comment(lib, "bcrypt.lib")
+  #endif
+  #undef min
+  #undef max
+#else
+  // Dependência: fontes de entropia do sistema (`getrandom()` ou `/dev/urandom`).
+  // O descritor é aberto com `O_CLOEXEC`, repetindo em caso de EINTR/EAGAIN e
+  // forçando `fcntl(F_SETFD, FD_CLOEXEC)` quando a flag não é suportada no
+  // `open()`.  Ao receber ENOSYS/EINVAL/EPERM de `getrandom()`, o código recai
+  // para `/dev/urandom`.  Erros são propagados ao chamador.
+  #include <unistd.h>
+  #include <fcntl.h>
+  #include <errno.h>
+  #include <sys/types.h> // ssize_t
+  #ifdef __linux__
+    #include <sys/random.h>
+  #endif
 #endif
 namespace bitcrypto { namespace rng {
-// Retorna true em caso de sucesso. Usa o RNG preferido do sistema (Windows CNG).
-inline bool random_bytes(uint8_t* out, size_t n){
-#ifdef _WIN32
-    NTSTATUS st = BCryptGenRandom(nullptr, (PUCHAR)out, (ULONG)n, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
-    return st==0;
+
+#ifndef _WIN32
+namespace detail {
+// Maior bloco permitido pelo tipo ssize_t ao ler de /dev/urandom.
+static constexpr size_t kDevUrandomMaxChunk =
+    static_cast<size_t>(std::numeric_limits<ssize_t>::max());
+
+// Fecha descritores preservando errno original em caminhos de erro.
+[[nodiscard]] inline bool close_fd_preserve(int fd, int restore_errno) {
+    if (fd < 0) {
+        return true;
+    }
+    int rc;
+    do {
+        rc = ::close(fd);
+    } while (rc != 0 && errno == EINTR);
+    if (rc != 0) {
+        return false;
+    }
+    errno = restore_errno;
+    return true;
+}
+
+// Fecha descritores restaurando errno anterior em caminhos de sucesso.
+[[nodiscard]] inline bool close_fd_noerrno(int fd) {
+    if (fd < 0) {
+        return true;
+    }
+    int saved_errno = errno;
+    int rc;
+    do {
+        rc = ::close(fd);
+    } while (rc != 0 && errno == EINTR);
+    if (rc != 0) {
+        return false;
+    }
+    errno = saved_errno;
+    return true;
+}
+
+#if defined(O_CLOEXEC)
+// Ajusta a flag close-on-exec via fcntl(), repetindo em caso de EINTR.
+[[nodiscard]] inline bool set_cloexec_flag(int fd) {
+    int flags;
+    do {
+        flags = ::fcntl(fd, F_GETFD);
+    } while (flags == -1 && errno == EINTR);
+    if (flags == -1) {
+        return false;
+    }
+    int rc;
+    do {
+        rc = ::fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
+    } while (rc == -1 && errno == EINTR);
+    return rc != -1;
+}
+#endif
+
+// Abre `/dev/urandom`, configurando O_CLOEXEC e preservando errno em caso de erro.
+[[nodiscard]] inline bool open_urandom_fd(int& fd) {
+#if defined(O_CLOEXEC)
+    bool retried_without_cloexec = false;
+    for (;;) {
+        int flags = O_RDONLY | (retried_without_cloexec ? 0 : O_CLOEXEC);
+        fd = ::open("/dev/urandom", flags);
+        if (fd >= 0) {
+            if ((flags & O_CLOEXEC) == 0) {
+                if (!set_cloexec_flag(fd)) {
+                    int err = errno;
+                    if (!close_fd_preserve(fd, err)) {
+                        return false;
+                    }
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (errno == EINTR || errno == EAGAIN) {
+            continue;
+        }
+        if (!retried_without_cloexec && errno == EINVAL) {
+            retried_without_cloexec = true;
+            continue;
+        }
+        return false;
+    }
 #else
-    // Em outros sistemas, esta função pode ser estendida no futuro (mantemos compatibilidade com o alvo Windows).
-    return false;
+    for (;;) {
+        fd = ::open("/dev/urandom", O_RDONLY);
+        if (fd >= 0) {
+            return true;
+        }
+        if (errno != EINTR && errno != EAGAIN) {
+            return false;
+        }
+    }
 #endif
 }
-}}
+
+#ifdef __linux__
+enum class getrandom_result {
+    completed,
+    needs_fallback,
+    error,
+};
+
+// Usa getrandom() para preencher o buffer; retorna se deve cair no fallback.
+[[nodiscard]] inline getrandom_result fill_from_getrandom(uint8_t* out, size_t n, size_t& off) {
+    static constexpr size_t kGetrandomMax = 33554431u; // 32 MiB - 1, limite da syscall
+    while (off < n) {
+        size_t want = n - off;
+        if (want > kGetrandomMax) {
+            want = kGetrandomMax;
+        }
+        ssize_t r = ::getrandom(out + off, want, 0);
+        if (r < 0) {
+            if (errno == EINTR || errno == EAGAIN) {
+                continue;
+            }
+            if (errno == ENOSYS || errno == EINVAL || errno == EPERM) {
+                return getrandom_result::needs_fallback;
+            }
+            return getrandom_result::error;
+        }
+        if (r == 0) {
+            errno = EIO;
+            return getrandom_result::needs_fallback;
+        }
+        off += static_cast<size_t>(r);
+    }
+    return getrandom_result::completed;
+}
+#endif // __linux__
+
+// Lê de /dev/urandom respeitando limites de ssize_t e preservando errno.
+[[nodiscard]] inline bool fill_from_urandom(uint8_t* out, size_t n, size_t off) {
+    if (off >= n) {
+        return true;
+    }
+    int fd = -1;
+    if (!open_urandom_fd(fd)) {
+        return false;
+    }
+
+    while (off < n) {
+        size_t want = n - off;
+        if (want > kDevUrandomMaxChunk) {
+            want = kDevUrandomMaxChunk;
+        }
+        ssize_t r = ::read(fd, out + off, want);
+        if (r > 0) {
+            off += static_cast<size_t>(r);
+            continue;
+        }
+        if (r < 0) {
+            if (errno == EINTR || errno == EAGAIN) {
+                continue;
+            }
+            int err = errno;
+            if (!close_fd_preserve(fd, err)) {
+                return false;
+            }
+            return false;
+        }
+        if (!close_fd_preserve(fd, EIO)) {
+            return false;
+        }
+        return false;
+    }
+    if (!close_fd_noerrno(fd)) {
+        return false;
+    }
+    return true;
+}
+} // namespace detail
+#endif
+// Retorna true em caso de sucesso.
+// No Windows usa o RNG preferido do sistema (CNG);
+// em Unix tenta `getrandom()` e cai para `/dev/urandom` quando necessário.
+[[nodiscard]] inline bool random_bytes(uint8_t* out, size_t n) {
+    // Rejeita ponteiros nulos quando há bytes a preencher, preservando a propagação de erro.
+    if (out == nullptr) {
+        if (n == 0) {
+            return true;
+        }
+#ifdef _WIN32
+        ::SetLastError(ERROR_INVALID_PARAMETER);
+#else
+        errno = EINVAL;
+#endif
+        return false;
+    }
+    if (n == 0) {
+        return true;
+    }
+#ifdef _WIN32
+    // A API do CNG aceita até ULONG bytes por chamada; fracionamos buffers maiores.
+    const size_t chunk_limit = static_cast<size_t>(std::numeric_limits<ULONG>::max());
+    size_t offset = 0;
+    while (offset < n) {
+        size_t remaining = n - offset;
+        ULONG request = remaining > chunk_limit ? std::numeric_limits<ULONG>::max()
+                                                : static_cast<ULONG>(remaining);
+        NTSTATUS st = BCryptGenRandom(nullptr,
+                                      reinterpret_cast<PUCHAR>(out + offset),
+                                      request,
+                                      BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+        if (!BCRYPT_SUCCESS(st)) {
+            ::SetLastError(static_cast<DWORD>(st));
+            return false;
+        }
+        offset += static_cast<size_t>(request);
+    }
+    return true;
+#else
+    size_t off = 0;
+#ifdef __linux__
+    switch (detail::fill_from_getrandom(out, n, off)) {
+    case detail::getrandom_result::completed:
+        return true;
+    case detail::getrandom_result::error:
+        return false;
+    case detail::getrandom_result::needs_fallback:
+        break;
+    }
+#endif
+    return detail::fill_from_urandom(out, n, off);
+#endif
+}
+
+// Sobrecarga de conveniência para buffers genéricos.
+[[nodiscard]] inline bool random_bytes(void* out, size_t n) {
+    return random_bytes(static_cast<uint8_t*>(out), n);
+}
+
+// Preenche contêineres com armazenamento contíguo (ex.: std::vector, std::array).
+template <typename Container>
+[[nodiscard]] inline bool random_bytes(Container& container) {
+    using value_type = typename Container::value_type;
+    static_assert(std::is_trivially_copyable<value_type>::value,
+                  "random_bytes requer elementos trivialmente copiáveis");
+    static_assert(!std::is_const<value_type>::value,
+                  "random_bytes requer contêiner mutável");
+
+    auto* data = container.data();
+    static_assert(std::is_pointer<decltype(data)>::value,
+                  "random_bytes requer contêiner contíguo");
+    if (data == nullptr) {
+        return container.size() == 0;
+    }
+
+    size_t bytes = container.size() * sizeof(value_type);
+    if (bytes == 0) {
+        return true;
+    }
+    return random_bytes(static_cast<void*>(data), bytes);
+}
+
+// Trata arrays C tradicionais preservando as mesmas garantias das demais APIs.
+template <typename T, size_t N>
+[[nodiscard]] inline bool random_bytes(T (&array)[N]) {
+    static_assert(std::is_trivially_copyable<T>::value,
+                  "random_bytes requer elementos trivialmente copiáveis");
+    static_assert(!std::is_const<T>::value, "random_bytes não aceita arrays const");
+    return random_bytes(reinterpret_cast<uint8_t*>(array), sizeof(T) * N);
+}
+
+// Gera um valor aleatório para tipos triviais (ex.: inteiros, structs `struct POD`).
+template <typename T>
+[[nodiscard]] inline bool random_value(T& value) {
+    static_assert(std::is_trivially_copyable<T>::value,
+                  "random_value requer tipos trivialmente copiáveis");
+    static_assert(!std::is_pointer<T>::value, "random_value não aceita ponteiros");
+    return random_bytes(reinterpret_cast<uint8_t*>(&value), sizeof(T));
+}
+}} // ns

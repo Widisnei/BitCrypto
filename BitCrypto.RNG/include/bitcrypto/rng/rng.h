@@ -261,6 +261,38 @@ enum class getrandom_result {
     return random_bytes(static_cast<uint8_t*>(out), n);
 }
 
+// Preenche contêineres com armazenamento contíguo (ex.: std::vector, std::array).
+template <typename Container>
+[[nodiscard]] inline bool random_bytes(Container& container) {
+    using value_type = typename Container::value_type;
+    static_assert(std::is_trivially_copyable<value_type>::value,
+                  "random_bytes requer elementos trivialmente copiáveis");
+    static_assert(!std::is_const<value_type>::value,
+                  "random_bytes requer contêiner mutável");
+
+    auto* data = container.data();
+    static_assert(std::is_pointer<decltype(data)>::value,
+                  "random_bytes requer contêiner contíguo");
+    if (data == nullptr) {
+        return container.size() == 0;
+    }
+
+    size_t bytes = container.size() * sizeof(value_type);
+    if (bytes == 0) {
+        return true;
+    }
+    return random_bytes(static_cast<void*>(data), bytes);
+}
+
+// Trata arrays C tradicionais preservando as mesmas garantias das demais APIs.
+template <typename T, size_t N>
+[[nodiscard]] inline bool random_bytes(T (&array)[N]) {
+    static_assert(std::is_trivially_copyable<T>::value,
+                  "random_bytes requer elementos trivialmente copiáveis");
+    static_assert(!std::is_const<T>::value, "random_bytes não aceita arrays const");
+    return random_bytes(reinterpret_cast<uint8_t*>(array), sizeof(T) * N);
+}
+
 // Gera um valor aleatório para tipos triviais (ex.: inteiros, structs `struct POD`).
 template <typename T>
 [[nodiscard]] inline bool random_value(T& value) {
